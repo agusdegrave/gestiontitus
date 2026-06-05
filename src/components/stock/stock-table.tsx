@@ -50,7 +50,7 @@ export function StockTable({ autos, loading, canEdit, canDelete, canSenar, onEdi
             <Th className="text-right">Publicado</Th>
             <Th className="text-right">Margen</Th>
             <Th>Responsable</Th>
-            <Th className="w-16" />
+            <Th className="w-28" />
           </tr>
         </thead>
         <tbody>
@@ -95,14 +95,14 @@ export function StockTable({ autos, loading, canEdit, canDelete, canSenar, onEdi
                   : "—"}
               </Td>
               <Td>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5">
                   {canSenar(auto) && (
                     <button
                       onClick={() => onSenar(auto)}
-                      className="p-1.5 rounded-[8px] text-muted-foreground hover:text-brand-600 hover:bg-brand-50 transition-colors"
-                      title="Señar"
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-[8px] text-xs font-semibold bg-brand-500 text-white hover:bg-brand-600 transition-colors"
                     >
-                      <Handshake className="w-3.5 h-3.5" />
+                      <Handshake className="w-3 h-3" />
+                      Señar
                     </button>
                   )}
                   {canEdit(auto) && (
