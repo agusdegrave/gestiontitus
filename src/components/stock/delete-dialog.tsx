@@ -16,13 +16,12 @@ import type { Auto } from "@/types/stock"
 
 interface Props {
   auto: Auto | null
-  usuarioId: string
   open: boolean
   onClose: () => void
   onDeleted: () => void
 }
 
-export function DeleteDialog({ auto, usuarioId, open, onClose, onDeleted }: Props) {
+export function DeleteDialog({ auto, open, onClose, onDeleted }: Props) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -30,7 +29,7 @@ export function DeleteDialog({ auto, usuarioId, open, onClose, onDeleted }: Prop
     if (!auto) return
     setLoading(true)
     setError(null)
-    const { error: err } = await softDeleteAuto(auto.id, usuarioId)
+    const { error: err } = await softDeleteAuto(auto.id)
     setLoading(false)
     if (err) {
       setError("No se pudo eliminar el auto. Intentá de nuevo.")

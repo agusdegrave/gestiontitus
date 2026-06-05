@@ -55,32 +55,28 @@ export async function fetchUsuariosAgencia(agenciaId: string): Promise<UsuarioSi
   return (data as UsuarioSimple[]) ?? []
 }
 
-export async function saveAuto(
-  data: Partial<Auto>,
-  usuarioId: string,
-  agenciaId: string,
-  editingId?: string
-) {
+export async function saveAuto(data: Partial<Auto>, editingId?: string) {
   const supabase = createClient()
   if (editingId) {
     return supabase
       .from("autos")
-      .update({ ...data, actualizado_por: usuarioId })
+      .update(data)
       .eq("id", editingId)
       .select()
       .single()
   }
+  // No mandamos agencia_id ni campos de auditoría: los completa la base por trigger/RLS
   return supabase
     .from("autos")
-    .insert({ ...data, agencia_id: agenciaId, creado_por: usuarioId, actualizado_por: usuarioId })
+    .insert(data)
     .select()
     .single()
 }
 
-export async function softDeleteAuto(id: string, usuarioId: string) {
+export async function softDeleteAuto(id: string) {
   const supabase = createClient()
   return supabase
     .from("autos")
-    .update({ eliminado: true, actualizado_por: usuarioId })
+    .update({ eliminado: true })
     .eq("id", id)
 }

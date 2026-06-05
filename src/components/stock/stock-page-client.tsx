@@ -201,14 +201,11 @@ export function StockPageClient() {
         onSaved={handleSaved}
         editingAuto={editingAuto}
         usuarios={usuarios}
-        usuarioId={usuario.id}
-        agenciaId={usuario.agencia_id}
       />
 
       {/* Delete dialog */}
       <DeleteDialog
         auto={deleteAuto}
-        usuarioId={usuario.id}
         open={!!deleteAuto}
         onClose={() => setDeleteAuto(null)}
         onDeleted={handleDeleted}

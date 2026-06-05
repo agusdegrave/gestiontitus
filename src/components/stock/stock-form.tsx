@@ -30,8 +30,6 @@ interface Props {
   onSaved: () => void
   editingAuto: Auto | null
   usuarios: UsuarioSimple[]
-  usuarioId: string
-  agenciaId: string
 }
 
 interface FormState {
@@ -123,7 +121,7 @@ function autoToForm(a: Auto): FormState {
   }
 }
 
-export function StockForm({ open, onClose, onSaved, editingAuto, usuarios, usuarioId, agenciaId }: Props) {
+export function StockForm({ open, onClose, onSaved, editingAuto, usuarios }: Props) {
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -166,6 +164,8 @@ export function StockForm({ open, onClose, onSaved, editingAuto, usuarios, usuar
       : true
 
     const payload: Partial<Auto> = {
+      // eliminado: false explícito — sin esto, INSERT queda NULL y .eq("eliminado",false) lo oculta
+      eliminado: false,
       tipo: form.tipo as Auto["tipo"],
       estado: form.estado as Auto["estado"],
       dominio: form.dominio.toUpperCase().trim(),
@@ -196,11 +196,16 @@ export function StockForm({ open, onClose, onSaved, editingAuto, usuarios, usuar
       ...(pricesChanged && { ultima_modif_precio: new Date().toISOString() }),
     }
 
-    const { error: err } = await saveAuto(payload, usuarioId, agenciaId, editingAuto?.id)
+    const { error: err } = await saveAuto(payload, editingAuto?.id)
     setLoading(false)
 
     if (err) {
-      setError(err.message ?? "No se pudo guardar el auto.")
+      console.error("saveAuto error:", {
+        code: (err as { code?: string }).code,
+        message: err.message,
+        details: (err as { details?: string }).details,
+      })
+      setError(`Error al guardar: ${err.message}`)
       return
     }
     onSaved()
