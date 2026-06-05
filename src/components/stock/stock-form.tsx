@@ -87,7 +87,7 @@ const EMPTY_FORM: FormState = {
   ubicacion: "",
   estado_general: "",
   itv_vence: "",
-  tiene_gnc: "",
+  tiene_gnc: "no",
 }
 
 function autoToForm(a: Auto): FormState {
@@ -117,7 +117,7 @@ function autoToForm(a: Auto): FormState {
     ubicacion: a.ubicacion ?? "",
     estado_general: a.estado_general?.toString() ?? "",
     itv_vence: a.itv_vence ?? "",
-    tiene_gnc: a.tiene_gnc === true ? "si" : a.tiene_gnc === false ? "no" : "",
+    tiene_gnc: a.tiene_gnc === true ? "si" : "no",
   }
 }
 
@@ -192,7 +192,7 @@ export function StockForm({ open, onClose, onSaved, editingAuto, usuarios }: Pro
       ubicacion: form.ubicacion.trim() || null,
       estado_general: form.estado_general ? parseInt(form.estado_general) : null,
       itv_vence: form.itv_vence || null,
-      tiene_gnc: form.tiene_gnc === "si" ? true : form.tiene_gnc === "no" ? false : null,
+      tiene_gnc: form.tiene_gnc === "si",
       ...(pricesChanged && { ultima_modif_precio: new Date().toISOString() }),
     }
 
@@ -466,9 +466,8 @@ export function StockForm({ open, onClose, onSaved, editingAuto, usuarios }: Pro
                         <SelectValue placeholder="—" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">—</SelectItem>
-                        <SelectItem value="si">Sí</SelectItem>
                         <SelectItem value="no">No</SelectItem>
+                        <SelectItem value="si">Sí</SelectItem>
                       </SelectContent>
                     </Select>
                   </Field>
