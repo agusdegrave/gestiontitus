@@ -6,12 +6,9 @@ import { Plus, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/auth-context"
 import { fetchConsignaciones, PAGE_SIZE } from "@/lib/consignacion"
-import { fetchUsuariosAgencia } from "@/lib/stock"
 import { ConsignacionFiltersBar } from "./consignacion-filters"
 import { ConsignacionTable } from "./consignacion-table"
-import { ConsignacionForm } from "./consignacion-form"
 import type { ConsignacionRow, ConsignacionFilters } from "@/types/consignacion"
-import type { UsuarioSimple } from "@/types/stock"
 
 const EMPTY_FILTERS: ConsignacionFilters = { search: "", tipoConsigna: "", estadoVerif: "" }
 
@@ -26,8 +23,6 @@ export function ConsignacionPageClient() {
   const [page, setPage] = useState(0)
   const [filters, setFilters] = useState<ConsignacionFilters>(EMPTY_FILTERS)
   const [debouncedSearch, setDebouncedSearch] = useState("")
-  const [usuarios, setUsuarios] = useState<UsuarioSimple[]>([])
-  const [formOpen, setFormOpen] = useState(false)
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(filters.search), 400)
@@ -52,22 +47,12 @@ export function ConsignacionPageClient() {
 
   useEffect(() => { load() }, [load])
 
-  useEffect(() => {
-    if (!usuario?.agencia_id) return
-    fetchUsuariosAgencia(usuario.agencia_id).then(setUsuarios)
-  }, [usuario?.agencia_id])
-
   useEffect(() => { setPage(0) }, [filters, debouncedSearch])
 
   const canCreate =
     usuario?.rol !== "vendedor" && usuario?.rol !== "alistaje"
 
   const totalPages = Math.ceil(total / PAGE_SIZE)
-
-  function handleSaved(autoId: string) {
-    setFormOpen(false)
-    router.push(`/consignacion/${autoId}`)
-  }
 
   if (!usuario) return null
 
@@ -80,7 +65,7 @@ export function ConsignacionPageClient() {
         </div>
         {canCreate && (
           <Button
-            onClick={() => setFormOpen(true)}
+            onClick={() => router.push("/vehiculos/nuevo?tipo=consigna")}
             className="rounded-[12px] bg-brand-500 hover:bg-brand-600 text-white h-9 gap-1.5"
           >
             <Plus className="w-4 h-4" />
@@ -133,13 +118,6 @@ export function ConsignacionPageClient() {
           </div>
         </div>
       )}
-
-      <ConsignacionForm
-        open={formOpen}
-        onClose={() => setFormOpen(false)}
-        onSaved={handleSaved}
-        usuarios={usuarios}
-      />
     </div>
   )
 }

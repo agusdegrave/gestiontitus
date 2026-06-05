@@ -109,32 +109,6 @@ export async function fetchConsignacionById(autoId: string) {
   return { data: normalizeRow(data), error: null }
 }
 
-export async function createConsignacion(
-  autoPayload: Record<string, unknown>,
-  consignacionPayload: Record<string, unknown>
-) {
-  const supabase = createClient()
-
-  const { data: auto, error: autoError } = await supabase
-    .from("autos")
-    .insert(autoPayload)
-    .select("id")
-    .single()
-
-  if (autoError || !auto) return { error: autoError }
-
-  const { error: consigError } = await supabase
-    .from("consignacion")
-    .insert({ ...consignacionPayload, auto_id: auto.id })
-
-  if (consigError) {
-    await supabase.from("autos").delete().eq("id", auto.id)
-    return { error: consigError }
-  }
-
-  return { error: null, autoId: auto.id }
-}
-
 export async function updateAuto(autoId: string, payload: Record<string, unknown>) {
   const supabase = createClient()
   return supabase.from("autos").update(payload).eq("id", autoId)

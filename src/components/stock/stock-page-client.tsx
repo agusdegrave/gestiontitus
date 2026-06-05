@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { Plus, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/auth-context"
@@ -16,6 +17,7 @@ const EMPTY_FILTERS: AutoFilters = { search: "", tipo: "", estado: "", responsab
 
 export function StockPageClient() {
   const { usuario } = useAuth()
+  const router = useRouter()
 
   const [autos, setAutos] = useState<Auto[]>([])
   const [total, setTotal] = useState(0)
@@ -103,8 +105,7 @@ export function StockPageClient() {
   }
 
   function handleNew() {
-    setEditingAuto(null)
-    setFormOpen(true)
+    router.push("/vehiculos/nuevo?tipo=propio")
   }
 
   function handleFormClose() {
