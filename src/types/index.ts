@@ -1,4 +1,11 @@
-export type Rol = "admin" | "vendedor" | "gestor" | "director"
+export type Rol =
+  | "admin"
+  | "vendedor"
+  | "gestor"
+  | "director"
+  | "consignatario"
+  | "alistaje"
+  | "administracion"
 
 export interface Usuario {
   id: string
