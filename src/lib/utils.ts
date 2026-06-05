@@ -14,6 +14,11 @@ export function formatPriceARS(value: number | null | undefined): string {
   }).format(value)
 }
 
+export function formatPriceUSD(value: number | null | undefined): string {
+  if (value == null) return "—"
+  return `USD ${new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 }).format(value)}`
+}
+
 export function formatNumber(value: number | null | undefined): string {
   if (value == null) return "—"
   return new Intl.NumberFormat("es-AR").format(value)
