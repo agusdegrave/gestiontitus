@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation"
 import {
   Car,
   ArrowLeftRight,
-  ShoppingCart,
   FileText,
   ClipboardList,
   Wallet,
@@ -16,7 +15,6 @@ import {
   PanelLeftOpen,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useAuth } from "@/contexts/auth-context"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface NavItem {
@@ -24,16 +22,11 @@ interface NavItem {
   href: string | null
   icon: React.ElementType
   active: boolean
-  /** Si está definido, el item solo se muestra para estos roles */
-  roles?: string[]
 }
-
-const ROLES_COMPRAS = ["administracion", "direccion"]
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Stock", href: "/stock", icon: Car, active: true },
   { label: "Consignación", href: "/consignacion", icon: ArrowLeftRight, active: true },
-  { label: "Compras", href: "/compras", icon: ShoppingCart, active: true, roles: ROLES_COMPRAS },
   { label: "Operaciones", href: "/operaciones", icon: FileText, active: true },
   { label: "Gestoría", href: null, icon: ClipboardList, active: false },
   { label: "Caja", href: null, icon: Wallet, active: false },
@@ -43,12 +36,7 @@ const NAV_ITEMS: NavItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { usuario } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
-
-  const visibleItems = NAV_ITEMS.filter(
-    (item) => !item.roles || (usuario && item.roles.includes(usuario.rol))
-  )
 
   return (
     <aside
@@ -93,7 +81,7 @@ export function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto overflow-x-hidden">
-        {visibleItems.map((item) => {
+        {NAV_ITEMS.map((item) => {
           const isCurrentPage = item.href ? pathname.startsWith(item.href) : false
 
           if (!item.active) {
