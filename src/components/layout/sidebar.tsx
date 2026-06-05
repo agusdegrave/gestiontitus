@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -10,6 +11,8 @@ import {
   Wallet,
   Users,
   BarChart3,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
@@ -33,21 +36,51 @@ const NAV_ITEMS: NavItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <aside className="w-[220px] shrink-0 flex flex-col h-full bg-[#1c1917] border-r border-[#292524]">
+    <aside
+      className={cn(
+        "shrink-0 flex flex-col h-full bg-[#1c1917] border-r border-[#292524]",
+        "overflow-hidden transition-[width] duration-300 ease-in-out",
+        collapsed ? "w-16" : "w-[220px]"
+      )}
+    >
       {/* Logo */}
       <div className="h-14 flex items-center gap-3 px-4 border-b border-[#292524]">
         <div className="w-8 h-8 rounded-[8px] bg-brand-500 flex items-center justify-center shrink-0">
           <Car className="w-4 h-4 text-white" />
         </div>
-        <span className="text-white font-bold text-[15px] tracking-tight">
-          Titus Cars
-        </span>
+        {!collapsed && (
+          <span className="text-white font-bold text-[15px] tracking-tight whitespace-nowrap">
+            Titus Cars
+          </span>
+        )}
+      </div>
+
+      {/* Toggle */}
+      <div
+        className={cn(
+          "flex px-2 pt-2",
+          collapsed ? "justify-center" : "justify-end"
+        )}
+      >
+        <button
+          type="button"
+          onClick={() => setCollapsed((prev) => !prev)}
+          aria-label={collapsed ? "Desplegar menú" : "Plegar menú"}
+          className="p-1.5 rounded-[8px] text-stone-400 hover:bg-[#292524] hover:text-stone-200 transition-colors"
+        >
+          {collapsed ? (
+            <PanelLeftOpen className="w-4 h-4" />
+          ) : (
+            <PanelLeftClose className="w-4 h-4" />
+          )}
+        </button>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
+      <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto overflow-x-hidden">
         {NAV_ITEMS.map((item) => {
           const isCurrentPage = item.href ? pathname.startsWith(item.href) : false
 
@@ -58,38 +91,61 @@ export function Sidebar() {
                   render={
                     <div
                       className={cn(
-                        "flex items-center gap-3 px-3 py-2 rounded-[10px] cursor-not-allowed",
-                        "text-stone-600 select-none"
+                        "flex items-center gap-3 py-2 rounded-[10px] cursor-not-allowed",
+                        "text-stone-600 select-none",
+                        collapsed ? "justify-center px-0" : "px-3"
                       )}
                     />
                   }
                 >
                   <item.icon className="w-4 h-4 shrink-0" />
-                  <span className="text-sm font-medium flex-1">{item.label}</span>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-700 bg-stone-800 px-1.5 py-0.5 rounded-[6px]">
-                    Pronto
-                  </span>
+                  {!collapsed && (
+                    <>
+                      <span className="text-sm font-medium flex-1 whitespace-nowrap">
+                        {item.label}
+                      </span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-700 bg-stone-800 px-1.5 py-0.5 rounded-[6px]">
+                        Pronto
+                      </span>
+                    </>
+                  )}
                 </TooltipTrigger>
                 <TooltipContent side="right" className="text-xs">
-                  Próximamente
+                  {collapsed ? `${item.label} · Próximamente` : "Próximamente"}
+                </TooltipContent>
+              </Tooltip>
+            )
+          }
+
+          const linkClassName = cn(
+            "flex items-center gap-3 py-2 rounded-[10px] transition-colors",
+            collapsed ? "justify-center px-0" : "px-3",
+            isCurrentPage
+              ? "bg-brand-500 text-white"
+              : "text-stone-400 hover:bg-[#292524] hover:text-stone-200"
+          )
+
+          if (collapsed) {
+            return (
+              <Tooltip key={item.label}>
+                <TooltipTrigger
+                  render={<Link href={item.href!} className={linkClassName} />}
+                >
+                  <item.icon className="w-4 h-4 shrink-0" />
+                </TooltipTrigger>
+                <TooltipContent side="right" className="text-xs">
+                  {item.label}
                 </TooltipContent>
               </Tooltip>
             )
           }
 
           return (
-            <Link
-              key={item.label}
-              href={item.href!}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-[10px] transition-colors",
-                isCurrentPage
-                  ? "bg-brand-500 text-white"
-                  : "text-stone-400 hover:bg-[#292524] hover:text-stone-200"
-              )}
-            >
+            <Link key={item.label} href={item.href!} className={linkClassName}>
               <item.icon className="w-4 h-4 shrink-0" />
-              <span className="text-sm font-medium">{item.label}</span>
+              <span className="text-sm font-medium whitespace-nowrap">
+                {item.label}
+              </span>
             </Link>
           )
         })}
