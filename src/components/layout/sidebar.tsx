@@ -24,7 +24,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { label: "Stock", href: "/stock", icon: Car, active: true },
   { label: "Consignación", href: "/consignacion", icon: ArrowLeftRight, active: true },
-  { label: "Operaciones", href: null, icon: FileText, active: false },
+  { label: "Operaciones", href: "/operaciones", icon: FileText, active: true },
   { label: "Gestoría", href: null, icon: ClipboardList, active: false },
   { label: "Caja", href: null, icon: Wallet, active: false },
   { label: "Gestores", href: null, icon: Users, active: false },

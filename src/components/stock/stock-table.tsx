@@ -1,6 +1,6 @@
 "use client"
 
-import { Pencil, Trash2 } from "lucide-react"
+import { Pencil, Trash2, Handshake } from "lucide-react"
 import { EstadoChip, TipoChip, CalificacionChip } from "./chips"
 import { formatPriceARS, formatNumber } from "@/lib/utils"
 import type { Auto } from "@/types/stock"
@@ -10,11 +10,13 @@ interface Props {
   loading: boolean
   canEdit: (a: Auto) => boolean
   canDelete: (a: Auto) => boolean
+  canSenar: (a: Auto) => boolean
   onEdit: (a: Auto) => void
   onDelete: (a: Auto) => void
+  onSenar: (a: Auto) => void
 }
 
-export function StockTable({ autos, loading, canEdit, canDelete, onEdit, onDelete }: Props) {
+export function StockTable({ autos, loading, canEdit, canDelete, canSenar, onEdit, onDelete, onSenar }: Props) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16 text-muted-foreground text-sm">
@@ -94,6 +96,15 @@ export function StockTable({ autos, loading, canEdit, canDelete, onEdit, onDelet
               </Td>
               <Td>
                 <div className="flex items-center gap-1">
+                  {canSenar(auto) && (
+                    <button
+                      onClick={() => onSenar(auto)}
+                      className="p-1.5 rounded-[8px] text-muted-foreground hover:text-brand-600 hover:bg-brand-50 transition-colors"
+                      title="Señar"
+                    >
+                      <Handshake className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                   {canEdit(auto) && (
                     <button
                       onClick={() => onEdit(auto)}

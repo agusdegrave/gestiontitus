@@ -9,6 +9,7 @@ import { StockFilters } from "./stock-filters"
 import { StockTable } from "./stock-table"
 import { StockForm } from "./stock-form"
 import { DeleteDialog } from "./delete-dialog"
+import { VentaForm } from "@/components/ventas/venta-form"
 import type { Auto, AutoFilters, UsuarioSimple } from "@/types/stock"
 
 const EMPTY_FILTERS: AutoFilters = { search: "", tipo: "", estado: "", responsable_id: "" }
@@ -31,6 +32,7 @@ export function StockPageClient() {
   const [editingAuto, setEditingAuto] = useState<Auto | null>(null)
 
   const [deleteAuto, setDeleteAuto] = useState<Auto | null>(null)
+  const [senandoAuto, setSenandoAuto] = useState<Auto | null>(null)
 
   // Debounce search
   useEffect(() => {
@@ -82,6 +84,13 @@ export function StockPageClient() {
   }
   const canDelete = (a: Auto) => canEdit(a)
 
+  const ROLES_SENAR = ["vendedor", "administracion", "director", "admin"]
+  const canSenar = (a: Auto) => {
+    if (!usuario) return false
+    if (!ROLES_SENAR.includes(usuario.rol)) return false
+    return a.estado !== "senado" && a.estado !== "vendido"
+  }
+
   const totalPages = Math.ceil(total / PAGE_SIZE)
 
   function handleFiltersChange(f: AutoFilters) {
@@ -114,6 +123,14 @@ export function StockPageClient() {
   function handleDeleted() {
     load()
     setDeleteAuto(null)
+  }
+
+  function handleSenar(a: Auto) {
+    setSenandoAuto(a)
+  }
+
+  function handleVentaSaved() {
+    load()
   }
 
   if (!usuario) return null
@@ -159,8 +176,10 @@ export function StockPageClient() {
         loading={loading}
         canEdit={canEdit}
         canDelete={canDelete}
+        canSenar={canSenar}
         onEdit={handleEdit}
         onDelete={handleDeleteRequest}
+        onSenar={handleSenar}
       />
 
       {/* Pagination */}
@@ -209,6 +228,15 @@ export function StockPageClient() {
         open={!!deleteAuto}
         onClose={() => setDeleteAuto(null)}
         onDeleted={handleDeleted}
+      />
+
+      {/* Venta form */}
+      <VentaForm
+        open={!!senandoAuto}
+        onClose={() => setSenandoAuto(null)}
+        onSaved={handleVentaSaved}
+        auto={senandoAuto}
+        usuarios={usuarios}
       />
     </div>
   )
