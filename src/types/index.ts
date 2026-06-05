@@ -1,11 +1,10 @@
+// Valores exactos del enum rol_usuario en la base
 export type Rol =
-  | "admin"
   | "vendedor"
-  | "gestor"
-  | "director"
   | "consignatario"
-  | "alistaje"
   | "administracion"
+  | "alistaje"
+  | "direccion"
 
 export interface Usuario {
   id: string

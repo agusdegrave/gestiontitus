@@ -24,7 +24,7 @@ import { fetchSocios, saveSocio, deleteSocio } from "@/lib/compras"
 import { ActivoChip } from "./compras-chips"
 import type { Socio } from "@/types/compras"
 
-const ROLES_ELIMINAR = ["director", "admin"]
+const ROLES_ELIMINAR = ["direccion"]
 
 interface SocioFormState {
   nombre: string

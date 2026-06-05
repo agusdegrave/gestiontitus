@@ -12,7 +12,7 @@ import type { Venta, Tarea, VentaFilters } from "@/types/ventas"
 
 const EMPTY_FILTERS: VentaFilters = { search: "", estado_operacion: "" }
 
-const ROLES_TAREAS = ["administracion", "director", "admin"]
+const ROLES_TAREAS = ["administracion", "direccion"]
 
 export function OperacionesPageClient() {
   const { usuario } = useAuth()

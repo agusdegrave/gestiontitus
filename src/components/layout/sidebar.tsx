@@ -28,7 +28,7 @@ interface NavItem {
   roles?: string[]
 }
 
-const ROLES_COMPRAS = ["administracion", "director", "admin"]
+const ROLES_COMPRAS = ["administracion", "direccion"]
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Stock", href: "/stock", icon: Car, active: true },

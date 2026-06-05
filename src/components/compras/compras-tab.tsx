@@ -33,7 +33,7 @@ import { OrigenChip, PorcentajeChip } from "./compras-chips"
 import { CompraForm } from "./compra-form"
 import type { CompraRow, ComprasFilters, AutoCompra, Socio } from "@/types/compras"
 
-const ROLES_ELIMINAR = ["director", "admin"]
+const ROLES_ELIMINAR = ["direccion"]
 
 const EMPTY_FILTERS: ComprasFilters = { search: "", origen: "" }
 

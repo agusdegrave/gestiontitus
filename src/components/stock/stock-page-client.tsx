@@ -84,8 +84,7 @@ export function StockPageClient() {
   }
   const canDelete = (a: Auto) => canEdit(a)
 
-  // "direccion" y "director" cubren ambas variantes del rol según DB vs tipo TS
-  const ROLES_SENAR = ["vendedor", "administracion", "director", "direccion", "admin"]
+  const ROLES_SENAR = ["vendedor", "administracion", "direccion"]
   const canSenar = (a: Auto) => {
     if (!usuario) return false
     if (!ROLES_SENAR.includes(usuario.rol)) return false

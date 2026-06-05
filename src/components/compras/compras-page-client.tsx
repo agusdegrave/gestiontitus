@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { ComprasTab } from "./compras-tab"
 import { SociosTab } from "./socios-tab"
 
-export const ROLES_COMPRAS = ["administracion", "director", "admin"]
+export const ROLES_COMPRAS = ["administracion", "direccion"]
 
 type Tab = "compras" | "socios"
 
