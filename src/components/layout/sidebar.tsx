@@ -29,7 +29,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Consignación", href: "/consignacion", icon: ArrowLeftRight, active: true },
   { label: "Operaciones", href: "/operaciones", icon: FileText, active: true },
   { label: "Gestoría", href: "/gestoria", icon: ClipboardList, active: true },
-  { label: "Caja", href: null, icon: Wallet, active: false },
+  { label: "Caja", href: "/caja", icon: Wallet, active: true },
   { label: "Gestores", href: null, icon: Users, active: false },
   { label: "Dirección", href: null, icon: BarChart3, active: false },
 ]
