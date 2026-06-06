@@ -3,16 +3,20 @@ import type { CajaSaldo, CajaMovimiento, MovimientoFilters } from "@/types/caja"
 
 export const MOVIMIENTOS_PAGE_SIZE = 30
 
-// Saldos SIEMPRE desde la vista cajas_saldos (la RLS filtra lo visible por rol)
-export async function fetchCajasSaldos(): Promise<{
+// Saldos SIEMPRE desde la vista cajas_saldos.
+// gestorId: filtro EXPLÍCITO para la vista del rol gestor (solo sus cajas);
+// no alcanza con confiar en la RLS, que deja ver más de la cuenta.
+export async function fetchCajasSaldos(gestorId?: string): Promise<{
   data: CajaSaldo[]
   error: { message: string } | null
 }> {
   const supabase = createClient()
-  const { data, error } = await supabase
+  let query = supabase
     .from("cajas_saldos")
     .select("id, nombre, tipo, moneda, gestor_id, saldo")
     .order("nombre")
+  if (gestorId) query = query.eq("gestor_id", gestorId)
+  const { data, error } = await query
   return { data: (data as CajaSaldo[] | null) ?? [], error }
 }
 
@@ -21,7 +25,8 @@ const MOVIMIENTO_SELECT = `id, caja_id, tipo, monto, fecha, concepto, categoria,
    autos(dominio),
    usuario:usuarios!caja_movimientos_creado_por_fkey(nombre, apellido)`
 
-export async function fetchMovimientos(filters: MovimientoFilters, page: number) {
+// soloCajas: restringe a esas cajas (vista del gestor); con lista vacía no trae nada
+export async function fetchMovimientos(filters: MovimientoFilters, page: number, soloCajas?: string[]) {
   const supabase = createClient()
   let query = supabase
     .from("caja_movimientos")
@@ -30,12 +35,34 @@ export async function fetchMovimientos(filters: MovimientoFilters, page: number)
     .order("creado_en", { ascending: false })
     .range(page * MOVIMIENTOS_PAGE_SIZE, (page + 1) * MOVIMIENTOS_PAGE_SIZE - 1)
 
+  if (soloCajas) query = query.in("caja_id", soloCajas)
   if (filters.categoria.trim()) query = query.ilike("categoria", `%${filters.categoria.trim()}%`)
   if (filters.caja_id) query = query.eq("caja_id", filters.caja_id)
   if (filters.tipo) query = query.eq("tipo", filters.tipo)
   if (filters.desde) query = query.gte("fecha", filters.desde)
   if (filters.hasta) query = query.lte("fecha", filters.hasta)
   return query
+}
+
+// Saldo corriente (extracto): saldo de la caja DESPUÉS de cada movimiento,
+// acumulando en orden cronológico todos los movimientos de esas cajas.
+export async function fetchSaldosCorrientes(cajaIds: string[]): Promise<Record<string, number>> {
+  if (cajaIds.length === 0) return {}
+  const supabase = createClient()
+  const { data } = await supabase
+    .from("caja_movimientos")
+    .select("id, caja_id, tipo, monto")
+    .in("caja_id", cajaIds)
+    .order("fecha", { ascending: true })
+    .order("creado_en", { ascending: true })
+
+  const acumulado: Record<string, number> = {}
+  const saldoTras: Record<string, number> = {}
+  for (const m of (data as Pick<CajaMovimiento, "id" | "caja_id" | "tipo" | "monto">[] | null) ?? []) {
+    acumulado[m.caja_id] = (acumulado[m.caja_id] ?? 0) + (m.tipo === "ingreso" ? m.monto : -m.monto)
+    saldoTras[m.id] = acumulado[m.caja_id]
+  }
+  return saldoTras
 }
 
 // Ingresos/Egresos de hoy por moneda (la RLS limita a las cajas visibles)

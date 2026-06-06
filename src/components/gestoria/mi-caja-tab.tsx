@@ -3,16 +3,20 @@
 import { useState, useEffect, useCallback } from "react"
 import { Plus, Loader2, Wallet } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/contexts/auth-context"
 import { fetchCajasSaldos } from "@/lib/caja"
 import { formatPriceARS, formatPriceUSD, cn } from "@/lib/utils"
 import { MovimientoForm } from "@/components/caja/movimiento-form"
 import { MovimientosSection } from "@/components/caja/movimientos-section"
 import type { CajaSaldo } from "@/types/caja"
 
-// Vista del rol gestor: SOLO sus cajas (Habitualista y Efectivo; la RLS las
-// filtra sola) y los movimientos de esas cajas. Puede cargar movimientos;
-// no puede crear cajas, transferir ni ver otras.
+// Vista del rol gestor: SOLO sus 2 cajas (Habitualista y Efectivo), filtradas
+// EXPLÍCITAMENTE por el gestor_id del usuario (no alcanza con la RLS).
+// Puede cargar movimientos; no puede crear cajas, transferir ni ver otras.
 export function MiCajaTab() {
+  const { usuario } = useAuth()
+  const gestorId = usuario?.gestor_id ?? null
+
   const [cajas, setCajas] = useState<CajaSaldo[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -21,16 +25,21 @@ export function MiCajaTab() {
   const [refreshKey, setRefreshKey] = useState(0)
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
+    // Sin gestor asociado no hay nada que traer (y sin filtro se vería todo)
+    if (!gestorId) {
+      setLoading(false)
+      return
+    }
     if (!opts?.silent) setLoading(true)
     setLoadError(null)
-    const { data, error } = await fetchCajasSaldos()
+    const { data, error } = await fetchCajasSaldos(gestorId)
     setLoading(false)
     if (error) {
       setLoadError(`No se pudieron cargar tus cajas: ${error.message}`)
       return
     }
     setCajas(data)
-  }, [])
+  }, [gestorId])
 
   useEffect(() => { load() }, [load])
 
@@ -44,6 +53,14 @@ export function MiCajaTab() {
       <div className="flex items-center justify-center py-16">
         <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
       </div>
+    )
+  }
+
+  if (!gestorId) {
+    return (
+      <p className="text-sm text-muted-foreground py-8">
+        Tu usuario no tiene un gestor asociado. Pedile al administrador que lo configure.
+      </p>
     )
   }
 
@@ -97,8 +114,16 @@ export function MiCajaTab() {
         </div>
       )}
 
-      {/* Movimientos de mis cajas */}
-      <MovimientosSection cajas={cajas} refreshKey={refreshKey} cajaPreseleccionada={null} />
+      {/* Movimientos SOLO de mis cajas, con saldo corriente (extracto) */}
+      {cajas.length > 0 && (
+        <MovimientosSection
+          cajas={cajas}
+          refreshKey={refreshKey}
+          cajaPreseleccionada={null}
+          soloCajas={cajas.map((c) => c.id)}
+          mostrarSaldo
+        />
+      )}
 
       <MovimientoForm
         open={movFormOpen}

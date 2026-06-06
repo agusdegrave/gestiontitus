@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { fetchMovimientos, MOVIMIENTOS_PAGE_SIZE } from "@/lib/caja"
+import { fetchMovimientos, fetchSaldosCorrientes, MOVIMIENTOS_PAGE_SIZE } from "@/lib/caja"
 import { formatPriceARS, formatPriceUSD, formatDateAR, capFirst, cn } from "@/lib/utils"
 import type { CajaSaldo, CajaMovimiento, MovimientoFilters } from "@/types/caja"
 
@@ -32,10 +32,15 @@ interface Props {
   refreshKey: number
   // Preselección de caja desde "Ver movimientos" del menú de una tarjeta
   cajaPreseleccionada: string | null
+  // Vista del gestor: restringe los movimientos a SOLO estas cajas
+  soloCajas?: string[]
+  // Columna "Saldo": saldo corriente de la caja tras cada movimiento (extracto)
+  mostrarSaldo?: boolean
 }
 
-export function MovimientosSection({ cajas, refreshKey, cajaPreseleccionada }: Props) {
+export function MovimientosSection({ cajas, refreshKey, cajaPreseleccionada, soloCajas, mostrarSaldo = false }: Props) {
   const [movimientos, setMovimientos] = useState<CajaMovimiento[]>([])
+  const [saldos, setSaldos] = useState<Record<string, number>>({})
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -65,10 +70,16 @@ export function MovimientosSection({ cajas, refreshKey, cajaPreseleccionada }: P
 
   const activeFilters: MovimientoFilters = { ...filters, categoria: debouncedCategoria }
 
+  const soloCajasKey = soloCajas?.join(",") ?? ""
+
   const load = useCallback(async () => {
     setLoading(true)
     setLoadError(null)
-    const result = await fetchMovimientos(activeFilters, page)
+    const [result, saldosTras] = await Promise.all([
+      fetchMovimientos(activeFilters, page, soloCajas),
+      // El saldo corriente acumula TODOS los movimientos de esas cajas (sin filtros)
+      mostrarSaldo && soloCajas ? fetchSaldosCorrientes(soloCajas) : Promise.resolve({}),
+    ])
     setLoading(false)
     if (result.error) {
       setLoadError(`No se pudieron cargar los movimientos: ${result.error.message}`)
@@ -76,7 +87,8 @@ export function MovimientosSection({ cajas, refreshKey, cajaPreseleccionada }: P
     }
     setMovimientos((result.data as unknown as CajaMovimiento[]) ?? [])
     setTotal(result.count ?? 0)
-  }, [debouncedCategoria, filters.caja_id, filters.tipo, filters.desde, filters.hasta, page, refreshKey]) // eslint-disable-line react-hooks/exhaustive-deps
+    setSaldos(saldosTras)
+  }, [debouncedCategoria, filters.caja_id, filters.tipo, filters.desde, filters.hasta, page, refreshKey, soloCajasKey, mostrarSaldo]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { load() }, [load])
   useEffect(() => { setPage(0) }, [debouncedCategoria, filters.caja_id, filters.tipo, filters.desde, filters.hasta])
@@ -177,6 +189,7 @@ export function MovimientosSection({ cajas, refreshKey, cajaPreseleccionada }: P
                 <Th>Tipo</Th>
                 <Th>Caja</Th>
                 <Th className="text-right">Monto</Th>
+                {mostrarSaldo && <Th className="text-right">Saldo</Th>}
                 <Th>Concepto</Th>
                 <Th>Vehículo</Th>
                 <Th>Categoría</Th>
@@ -217,6 +230,18 @@ export function MovimientosSection({ cajas, refreshKey, cajaPreseleccionada }: P
                         {esIngreso ? "+" : "−"}{fmt(m.monto)}
                       </span>
                     </Td>
+                    {mostrarSaldo && (
+                      <Td className="text-right">
+                        <span
+                          className={cn(
+                            "tabular-nums font-medium",
+                            (saldos[m.id] ?? 0) < 0 ? "text-red-600" : "text-foreground"
+                          )}
+                        >
+                          {saldos[m.id] != null ? fmt(saldos[m.id]) : "—"}
+                        </span>
+                      </Td>
+                    )}
                     <Td className="max-w-[260px]">
                       <span className="block truncate" title={m.concepto ?? undefined}>
                         {m.concepto ?? "—"}
