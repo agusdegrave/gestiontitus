@@ -261,9 +261,14 @@ export function CajaPageClient() {
                   >
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">{c.nombre}</p>
+                      {/* Efectivo queda neutro; el resto verde/rojo según signo (cero neutro) */}
                       <p className={cn(
                         "text-lg font-bold tabular-nums mt-0.5",
-                        c.saldo < 0 ? "text-red-600" : "text-foreground"
+                        c.saldo < 0
+                          ? "text-red-600"
+                          : c.tipo !== "efectivo" && c.saldo > 0
+                            ? "text-green-600"
+                            : "text-foreground"
                       )}>
                         {c.moneda === "USD" ? formatPriceUSD(c.saldo) : formatPriceARS(c.saldo)}
                       </p>
@@ -279,8 +284,9 @@ export function CajaPageClient() {
                       >
                         <MoreHorizontal className="w-4 h-4" />
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                      <DropdownMenuContent align="end" className="min-w-[180px]">
                         <DropdownMenuItem
+                          className="whitespace-nowrap"
                           onClick={() => setCajaPreseleccionada(c.id)}
                         >
                           <List className="w-3.5 h-3.5" />

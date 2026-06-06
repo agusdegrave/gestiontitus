@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { FormCard } from "./form-card"
+import { parsePrice, formatPriceARS, formatPriceUSD } from "@/lib/utils"
 import type { PrecioCardState, Moneda } from "@/types/vehiculos"
 
 interface Props {
@@ -19,6 +20,13 @@ interface Props {
 }
 
 export function CardPrecio({ value, onChange }: Props) {
+  // Preview con separador de miles bajo cada precio (igual que el resto de la app)
+  const fmt = value.moneda_publicacion === "USD" ? formatPriceUSD : formatPriceARS
+  const preview = (raw: string) =>
+    raw.trim() ? (
+      <p className="text-xs text-muted-foreground">{fmt(parsePrice(raw))}</p>
+    ) : null
+
   return (
     <FormCard icon={DollarSign} title="Precio" subtitle="Valores de referencia y publicación">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -30,6 +38,7 @@ export function CardPrecio({ value, onChange }: Props) {
             placeholder="$ 0"
             className="rounded-[10px]"
           />
+          {preview(value.precio_info)}
         </div>
         <div className="space-y-1.5">
           <Label>Moneda de publicación</Label>
@@ -57,6 +66,7 @@ export function CardPrecio({ value, onChange }: Props) {
             placeholder="$ 0"
             className="rounded-[10px]"
           />
+          {preview(value.precio_pretendido)}
         </div>
         <div className="space-y-1.5">
           <Label>Precio de publicación</Label>
@@ -66,6 +76,7 @@ export function CardPrecio({ value, onChange }: Props) {
             placeholder="$ 0"
             className="rounded-[10px]"
           />
+          {preview(value.precio_publicado)}
         </div>
         <div className="space-y-1.5">
           <Label>Calificación del precio</Label>

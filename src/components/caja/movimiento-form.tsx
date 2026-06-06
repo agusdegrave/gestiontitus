@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { saveMovimiento, fetchAutosSimple } from "@/lib/caja"
-import { parsePrice, formatPriceARS, formatPriceUSD } from "@/lib/utils"
+import { parsePrice, formatPriceARS, formatPriceUSD, capFirst } from "@/lib/utils"
 import { CATEGORIAS_SUGERIDAS } from "@/types/caja"
 import type { CajaSaldo, TipoMovimiento } from "@/types/caja"
 
@@ -177,7 +177,7 @@ export function MovimientoForm({ open, onClose, onSaved, cajas }: Props) {
             <Label>Concepto</Label>
             <Input
               value={form.concepto}
-              onChange={(e) => set("concepto")(e.target.value)}
+              onChange={(e) => set("concepto")(capFirst(e.target.value))}
               placeholder="Detalle del movimiento..."
               className="rounded-[10px]"
             />
@@ -188,7 +188,7 @@ export function MovimientoForm({ open, onClose, onSaved, cajas }: Props) {
               <Label>Categoría</Label>
               <Input
                 value={form.categoria}
-                onChange={(e) => set("categoria")(e.target.value)}
+                onChange={(e) => set("categoria")(capFirst(e.target.value))}
                 placeholder="sueldo, taller..."
                 list="categorias-sugeridas"
                 className="rounded-[10px]"

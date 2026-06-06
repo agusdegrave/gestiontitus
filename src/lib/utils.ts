@@ -24,6 +24,12 @@ export function formatNumber(value: number | null | undefined): string {
   return new Intl.NumberFormat("es-AR").format(value)
 }
 
+// Mayúscula inicial (solo la primera letra; no fuerza el resto).
+// NO usar en emails, dominios/patentes ni contraseñas.
+export function capFirst(s: string): string {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s
+}
+
 export function formatDateAR(value: string | null | undefined): string {
   if (!value) return "—"
   return new Date(value + "T00:00:00").toLocaleDateString("es-AR")

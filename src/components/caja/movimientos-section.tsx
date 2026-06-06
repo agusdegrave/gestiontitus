@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { fetchMovimientos, MOVIMIENTOS_PAGE_SIZE } from "@/lib/caja"
-import { formatPriceARS, formatPriceUSD, formatDateAR, cn } from "@/lib/utils"
+import { formatPriceARS, formatPriceUSD, formatDateAR, capFirst, cn } from "@/lib/utils"
 import type { CajaSaldo, CajaMovimiento, MovimientoFilters } from "@/types/caja"
 
 function todayISO() {
@@ -175,9 +175,9 @@ export function MovimientosSection({ cajas, refreshKey, cajaPreseleccionada }: P
               <tr className="border-b border-border bg-muted/40">
                 <Th>Fecha</Th>
                 <Th>Tipo</Th>
-                <Th>Concepto</Th>
-                <Th className="text-right">Monto</Th>
                 <Th>Caja</Th>
+                <Th className="text-right">Monto</Th>
+                <Th>Concepto</Th>
                 <Th>Vehículo</Th>
                 <Th>Categoría</Th>
                 <Th>Usuario</Th>
@@ -206,11 +206,7 @@ export function MovimientosSection({ cajas, refreshKey, cajaPreseleccionada }: P
                         {esIngreso ? "Ingreso" : "Egreso"}
                       </span>
                     </Td>
-                    <Td className="max-w-[260px]">
-                      <span className="block truncate" title={m.concepto ?? undefined}>
-                        {m.concepto ?? "—"}
-                      </span>
-                    </Td>
+                    <Td className="text-muted-foreground">{m.cajas?.nombre ?? "—"}</Td>
                     <Td className="text-right">
                       <span
                         className={cn(
@@ -221,9 +217,13 @@ export function MovimientosSection({ cajas, refreshKey, cajaPreseleccionada }: P
                         {esIngreso ? "+" : "−"}{fmt(m.monto)}
                       </span>
                     </Td>
-                    <Td className="text-muted-foreground">{m.cajas?.nombre ?? "—"}</Td>
+                    <Td className="max-w-[260px]">
+                      <span className="block truncate" title={m.concepto ?? undefined}>
+                        {m.concepto ?? "—"}
+                      </span>
+                    </Td>
                     <Td className="font-mono text-[13px]">{m.autos?.dominio ?? "—"}</Td>
-                    <Td className="text-muted-foreground">{m.categoria ?? "—"}</Td>
+                    <Td className="text-muted-foreground">{m.categoria ? capFirst(m.categoria) : "—"}</Td>
                     <Td className="text-muted-foreground">
                       {m.usuario ? `${m.usuario.nombre} ${m.usuario.apellido}` : "—"}
                     </Td>

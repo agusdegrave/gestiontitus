@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { saveVenta } from "@/lib/ventas"
-import { parsePrice, formatPriceARS } from "@/lib/utils"
+import { parsePrice, formatPriceARS, capFirst } from "@/lib/utils"
 import { useAuth } from "@/contexts/auth-context"
 import { FINANCIERAS } from "@/types/ventas"
 import type { Auto, UsuarioSimple } from "@/types/stock"
@@ -153,7 +153,7 @@ export function VentaForm({ open, onClose, onSaved, auto, usuarios }: Props) {
     const precio = parsePrice(form.precio_venta) ?? 0
     if (!precio) return null
     const diff = total - precio
-    if (diff === 0) return { type: "ok", label: "✓ Coincide" }
+    if (diff === 0) return { type: "ok", label: "âœ“ Coincide" }
     if (diff < 0) return { type: "falta", label: `Faltan ${formatPriceARS(Math.abs(diff))}` }
     return { type: "sobra", label: `Sobran ${formatPriceARS(diff)}` }
   }, [form.paga_contado, form.paga_permuta, form.paga_financiado, form.precio_venta])
@@ -228,13 +228,13 @@ export function VentaForm({ open, onClose, onSaved, auto, usuarios }: Props) {
         className="w-full sm:max-w-[56rem] flex flex-col p-0 gap-0"
       >
         <SheetHeader className="px-5 py-4 border-b border-border">
-          <SheetTitle>Señar auto</SheetTitle>
+          <SheetTitle>SeÃ±ar auto</SheetTitle>
           {/* Auto info readonly */}
           <div className="mt-1 inline-flex items-center gap-2 bg-muted rounded-[10px] px-3 py-1.5 w-fit">
             <span className="font-mono font-semibold text-sm tracking-wider text-foreground">
               {auto.dominio}
             </span>
-            <span className="text-muted-foreground text-sm">—</span>
+            <span className="text-muted-foreground text-sm">â€”</span>
             <span className="text-sm text-foreground">
               {auto.marca} {auto.modelo}
               {auto.anio ? ` (${auto.anio})` : ""}
@@ -245,10 +245,10 @@ export function VentaForm({ open, onClose, onSaved, auto, usuarios }: Props) {
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
           <div className="px-5 py-4 space-y-6">
 
-            {/* SEÑA */}
-            <Section title="Seña">
+            {/* SEÃ‘A */}
+            <Section title="SeÃ±a">
               <div className="grid grid-cols-3 gap-3">
-                <Field label="Fecha de seña *">
+                <Field label="Fecha de seÃ±a *">
                   <Input
                     type="date"
                     value={form.fecha_senia}
@@ -256,7 +256,7 @@ export function VentaForm({ open, onClose, onSaved, auto, usuarios }: Props) {
                     className="h-10 rounded-[10px]"
                   />
                 </Field>
-                <Field label="Monto seña ($)">
+                <Field label="Monto seÃ±a ($)">
                   <Input
                     value={form.senia}
                     onChange={(e) => set("senia")(e.target.value)}
@@ -264,10 +264,10 @@ export function VentaForm({ open, onClose, onSaved, auto, usuarios }: Props) {
                     className="h-10 rounded-[10px]"
                   />
                 </Field>
-                <Field label="Lugar seña">
+                <Field label="Lugar seÃ±a">
                   <Input
                     value={form.lugar_senia}
-                    onChange={(e) => set("lugar_senia")(e.target.value)}
+                    onChange={(e) => set("lugar_senia")(capFirst(e.target.value))}
                     placeholder="Agencia / otro"
                     className="h-10 rounded-[10px]"
                   />
@@ -283,7 +283,7 @@ export function VentaForm({ open, onClose, onSaved, auto, usuarios }: Props) {
                 <Field label="Vendedor">
                   <Select value={form.vendedor_id} onValueChange={set("vendedor_id")}>
                     <SelectTrigger className="w-full h-10 rounded-[10px]">
-                      <SelectValue placeholder="Seleccioná..." />
+                      <SelectValue placeholder="SeleccionÃ¡..." />
                     </SelectTrigger>
                     <SelectContent>
                       {usuarios.map((u) => (
@@ -297,7 +297,7 @@ export function VentaForm({ open, onClose, onSaved, auto, usuarios }: Props) {
                 <Field label="Procedencia">
                   <Input
                     value={form.procedencia}
-                    onChange={(e) => set("procedencia")(e.target.value)}
+                    onChange={(e) => set("procedencia")(capFirst(e.target.value))}
                     placeholder="Instagram, boca a boca..."
                     className="h-10 rounded-[10px]"
                   />
@@ -359,13 +359,13 @@ export function VentaForm({ open, onClose, onSaved, auto, usuarios }: Props) {
                 </div>
               )}
 
-              {/* Financiación */}
+              {/* FinanciaciÃ³n */}
               {showFinanciacion && (
                 <div className="mt-3 grid grid-cols-3 gap-3 pt-3 border-t border-border">
                   <Field label="Financiera">
                     <Select value={form.financiera} onValueChange={set("financiera")}>
                       <SelectTrigger className="w-full h-10 rounded-[10px]">
-                        <SelectValue placeholder="Seleccioná..." />
+                        <SelectValue placeholder="SeleccionÃ¡..." />
                       </SelectTrigger>
                       <SelectContent>
                         {FINANCIERAS.map((f) => (
@@ -404,7 +404,7 @@ export function VentaForm({ open, onClose, onSaved, auto, usuarios }: Props) {
                 <Field label="Nombre *">
                   <Input
                     value={form.comprador_nombre}
-                    onChange={(e) => set("comprador_nombre")(e.target.value)}
+                    onChange={(e) => set("comprador_nombre")(capFirst(e.target.value))}
                     placeholder="Juan"
                     className="h-10 rounded-[10px]"
                   />
@@ -412,8 +412,8 @@ export function VentaForm({ open, onClose, onSaved, auto, usuarios }: Props) {
                 <Field label="Apellido *">
                   <Input
                     value={form.comprador_apellido}
-                    onChange={(e) => set("comprador_apellido")(e.target.value)}
-                    placeholder="García"
+                    onChange={(e) => set("comprador_apellido")(capFirst(e.target.value))}
+                    placeholder="GarcÃ­a"
                     className="h-10 rounded-[10px]"
                   />
                 </Field>
@@ -427,7 +427,7 @@ export function VentaForm({ open, onClose, onSaved, auto, usuarios }: Props) {
                     className="h-10 rounded-[10px]"
                   />
                 </Field>
-                <Field label="Teléfono">
+                <Field label="TelÃ©fono">
                   <Input
                     value={form.comprador_telefono}
                     onChange={(e) => set("comprador_telefono")(e.target.value)}
@@ -438,7 +438,7 @@ export function VentaForm({ open, onClose, onSaved, auto, usuarios }: Props) {
                 <Field label="Domicilio">
                   <Input
                     value={form.comprador_domicilio}
-                    onChange={(e) => set("comprador_domicilio")(e.target.value)}
+                    onChange={(e) => set("comprador_domicilio")(capFirst(e.target.value))}
                     placeholder="Av. Siempre Viva 742"
                     className="h-10 rounded-[10px]"
                   />
@@ -458,7 +458,7 @@ export function VentaForm({ open, onClose, onSaved, auto, usuarios }: Props) {
                   className="w-4 h-4 rounded accent-brand-500 cursor-pointer"
                 />
                 <span className="text-sm font-medium text-foreground">
-                  ¿Entra un auto en parte de pago?
+                  Â¿Entra un auto en parte de pago?
                 </span>
               </label>
 
@@ -490,7 +490,7 @@ export function VentaForm({ open, onClose, onSaved, auto, usuarios }: Props) {
                     <Field label="Marca">
                       <Input
                         value={form.permuta.marca}
-                        onChange={(e) => setPermuta("marca")(e.target.value)}
+                        onChange={(e) => setPermuta("marca")(capFirst(e.target.value))}
                         placeholder="Ford"
                         className="h-10 rounded-[10px]"
                       />
@@ -498,22 +498,22 @@ export function VentaForm({ open, onClose, onSaved, auto, usuarios }: Props) {
                     <Field label="Modelo">
                       <Input
                         value={form.permuta.modelo}
-                        onChange={(e) => setPermuta("modelo")(e.target.value)}
+                        onChange={(e) => setPermuta("modelo")(capFirst(e.target.value))}
                         placeholder="Focus"
                         className="h-10 rounded-[10px]"
                       />
                     </Field>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
-                    <Field label="Versión">
+                    <Field label="VersiÃ³n">
                       <Input
                         value={form.permuta.version}
-                        onChange={(e) => setPermuta("version")(e.target.value)}
+                        onChange={(e) => setPermuta("version")(capFirst(e.target.value))}
                         placeholder="SE 1.6"
                         className="h-10 rounded-[10px]"
                       />
                     </Field>
-                    <Field label="Año">
+                    <Field label="AÃ±o">
                       <Input
                         type="number"
                         value={form.permuta.anio}
@@ -539,7 +539,7 @@ export function VentaForm({ open, onClose, onSaved, auto, usuarios }: Props) {
                     <Field label="Color">
                       <Input
                         value={form.permuta.color}
-                        onChange={(e) => setPermuta("color")(e.target.value)}
+                        onChange={(e) => setPermuta("color")(capFirst(e.target.value))}
                         placeholder="Gris"
                         className="h-10 rounded-[10px]"
                       />
@@ -547,23 +547,23 @@ export function VentaForm({ open, onClose, onSaved, auto, usuarios }: Props) {
                     <Field label="Combustible">
                       <Select value={form.permuta.combustible} onValueChange={(v) => setPermuta("combustible")(v ?? "")}>
                         <SelectTrigger className="w-full h-10 rounded-[10px]">
-                          <SelectValue placeholder="—" />
+                          <SelectValue placeholder="â€”" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">—</SelectItem>
+                          <SelectItem value="">â€”</SelectItem>
                           <SelectItem value="Nafta">Nafta</SelectItem>
-                          <SelectItem value="Diésel">Diésel</SelectItem>
+                          <SelectItem value="DiÃ©sel">DiÃ©sel</SelectItem>
                           <SelectItem value="GNC">GNC</SelectItem>
                           <SelectItem value="Nafta/GNC">Nafta/GNC</SelectItem>
-                          <SelectItem value="Híbrido">Híbrido</SelectItem>
-                          <SelectItem value="Eléctrico">Eléctrico</SelectItem>
+                          <SelectItem value="HÃ­brido">HÃ­brido</SelectItem>
+                          <SelectItem value="ElÃ©ctrico">ElÃ©ctrico</SelectItem>
                         </SelectContent>
                       </Select>
                     </Field>
                   </div>
                   {form.permuta.precio_toma && (
                     <p className="text-xs text-muted-foreground">
-                      El precio de toma se copia automáticamente al campo "Permuta ($)" de la forma de pago.
+                      El precio de toma se copia automÃ¡ticamente al campo "Permuta ($)" de la forma de pago.
                     </p>
                   )}
                 </div>
@@ -594,7 +594,7 @@ export function VentaForm({ open, onClose, onSaved, auto, usuarios }: Props) {
             onClick={handleSubmit}
             className="rounded-[12px] bg-brand-500 hover:bg-brand-600 text-white"
           >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Guardar seña"}
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Guardar seÃ±a"}
           </Button>
         </SheetFooter>
       </SheetContent>

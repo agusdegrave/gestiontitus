@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { saveTramite, updateTramite } from "@/lib/gestoria"
-import { parsePrice, formatPriceARS, cn } from "@/lib/utils"
+import { parsePrice, formatPriceARS, capFirst, cn } from "@/lib/utils"
 import { ESTADO_TRAMITE_LABELS, ESTADOS_CON_COSTO_REAL } from "@/types/gestoria"
 import type { Tramite, Gestor, EstadoTramite } from "@/types/gestoria"
 
@@ -213,7 +213,7 @@ export function TramiteForm({ open, onClose, onSaved, tramite, gestores, canEdit
                 <Label>Vehículo</Label>
                 <Input
                   value={form.vehiculo}
-                  onChange={(e) => set("vehiculo")(e.target.value)}
+                  onChange={(e) => set("vehiculo")(capFirst(e.target.value))}
                   disabled={disabled}
                   placeholder="Toyota Corolla 2020"
                   className="rounded-[10px]"
@@ -272,7 +272,7 @@ export function TramiteForm({ open, onClose, onSaved, tramite, gestores, canEdit
               <Label>Observaciones</Label>
               <Textarea
                 value={form.observaciones}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => set("observaciones")(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => set("observaciones")(capFirst(e.target.value))}
                 disabled={disabled}
                 className="rounded-[10px] resize-none"
                 rows={2}

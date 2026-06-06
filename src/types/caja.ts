@@ -56,10 +56,10 @@ export interface MovimientoFilters {
 }
 
 export const CATEGORIAS_SUGERIDAS = [
-  "sueldo",
-  "venta auto propio",
-  "venta consigna",
-  "taller",
-  "gestoría",
-  "transferencia",
+  "Sueldo",
+  "Venta auto propio",
+  "Venta consigna",
+  "Taller",
+  "Gestoría",
+  "Transferencia",
 ]

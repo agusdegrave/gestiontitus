@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { transferir } from "@/lib/caja"
-import { parsePrice, formatPriceARS, formatPriceUSD } from "@/lib/utils"
+import { parsePrice, formatPriceARS, formatPriceUSD, capFirst } from "@/lib/utils"
 import type { CajaSaldo } from "@/types/caja"
 
 interface Props {
@@ -145,7 +145,7 @@ export function TransferirDialog({ open, onClose, onSaved, origen, cajas }: Prop
             <Label>Concepto</Label>
             <Input
               value={concepto}
-              onChange={(e) => setConcepto(e.target.value)}
+              onChange={(e) => setConcepto(capFirst(e.target.value))}
               placeholder={`Transferencia desde ${origen?.nombre ?? "..."}`}
               className="rounded-[10px]"
             />

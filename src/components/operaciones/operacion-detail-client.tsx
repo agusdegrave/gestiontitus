@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select"
 import { useAuth } from "@/contexts/auth-context"
 import { fetchVentaById, fetchSeguimientoAuto, fetchFinanciacion, updateVenta, upsertFinanciacion } from "@/lib/ventas"
-import { formatPriceARS, formatDateAR, parsePrice, cn } from "@/lib/utils"
+import { formatPriceARS, formatDateAR, parsePrice, capFirst, cn } from "@/lib/utils"
 import { EstadoChip } from "@/components/stock/chips"
 import { VerifChip, InformeEstadoChip } from "@/components/consignacion/consignacion-chips"
 import { EstadoOperacionChip, PagoChip } from "./operacion-chips"
@@ -545,7 +545,7 @@ export function OperacionDetailClient({ ventaId, embedded = false, onSaved }: {
           <Label>¿Qué se prometió?</Label>
           <Textarea
             value={form.promesas_alistaje}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setField("promesas_alistaje", e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setField("promesas_alistaje", capFirst(e.target.value))}
             disabled={!canEdit}
             placeholder="Promesas de alistaje al comprador..."
             className="rounded-[10px] resize-none"
@@ -557,7 +557,7 @@ export function OperacionDetailClient({ ventaId, embedded = false, onSaved }: {
           <Label>Aclaraciones</Label>
           <Textarea
             value={form.aclaraciones}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setField("aclaraciones", e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setField("aclaraciones", capFirst(e.target.value))}
             disabled={!canEdit}
             className="rounded-[10px] resize-none"
             rows={3}

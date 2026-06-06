@@ -21,7 +21,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { Loader2, ChevronDown, ChevronUp } from "lucide-react"
 import { saveAuto } from "@/lib/stock"
-import { parsePrice, formatPriceARS } from "@/lib/utils"
+import { parsePrice, formatPriceARS, capFirst } from "@/lib/utils"
 import type { Auto, UsuarioSimple } from "@/types/stock"
 
 interface Props {
@@ -164,7 +164,7 @@ export function StockForm({ open, onClose, onSaved, editingAuto, usuarios }: Pro
       : true
 
     const payload: Partial<Auto> = {
-      // eliminado: false explícito — sin esto, INSERT queda NULL y .eq("eliminado",false) lo oculta
+      // eliminado: false explÃ­cito â€” sin esto, INSERT queda NULL y .eq("eliminado",false) lo oculta
       eliminado: false,
       tipo: form.tipo as Auto["tipo"],
       estado: form.estado as Auto["estado"],
@@ -248,7 +248,7 @@ export function StockForm({ open, onClose, onSaved, editingAuto, usuarios }: Pro
                     <SelectItem value="por_ingresar">Por ingresar</SelectItem>
                     <SelectItem value="en_alistaje">En alistaje</SelectItem>
                     <SelectItem value="activo">Activo</SelectItem>
-                    <SelectItem value="senado">Señado</SelectItem>
+                    <SelectItem value="senado">SeÃ±ado</SelectItem>
                     <SelectItem value="vendido">Vendido</SelectItem>
                   </SelectContent>
                 </Select>
@@ -269,30 +269,30 @@ export function StockForm({ open, onClose, onSaved, editingAuto, usuarios }: Pro
             {/* Marca / Modelo */}
             <div className="grid grid-cols-2 gap-3">
               <Field label="Marca">
-                <Input value={form.marca} onChange={(e) => set("marca")(e.target.value)} placeholder="Toyota" className="h-10 rounded-[10px]" />
+                <Input value={form.marca} onChange={(e) => set("marca")(capFirst(e.target.value))} placeholder="Toyota" className="h-10 rounded-[10px]" />
               </Field>
               <Field label="Modelo">
-                <Input value={form.modelo} onChange={(e) => set("modelo")(e.target.value)} placeholder="Corolla" className="h-10 rounded-[10px]" />
+                <Input value={form.modelo} onChange={(e) => set("modelo")(capFirst(e.target.value))} placeholder="Corolla" className="h-10 rounded-[10px]" />
               </Field>
             </div>
 
-            {/* Versión / Año */}
+            {/* VersiÃ³n / AÃ±o */}
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Versión">
-                <Input value={form.version} onChange={(e) => set("version")(e.target.value)} placeholder="XEI 2.0" className="h-10 rounded-[10px]" />
+              <Field label="VersiÃ³n">
+                <Input value={form.version} onChange={(e) => set("version")(capFirst(e.target.value))} placeholder="XEI 2.0" className="h-10 rounded-[10px]" />
               </Field>
-              <Field label="Año">
+              <Field label="AÃ±o">
                 <Input type="number" value={form.anio} onChange={(e) => set("anio")(e.target.value)} placeholder="2022" min={1950} max={2100} className="h-10 rounded-[10px]" />
               </Field>
             </div>
 
             {/* KM / Color */}
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Kilómetros">
+              <Field label="KilÃ³metros">
                 <Input type="number" value={form.km} onChange={(e) => set("km")(e.target.value)} placeholder="45000" min={0} className="h-10 rounded-[10px]" />
               </Field>
               <Field label="Color">
-                <Input value={form.color} onChange={(e) => set("color")(e.target.value)} placeholder="Blanco" className="h-10 rounded-[10px]" />
+                <Input value={form.color} onChange={(e) => set("color")(capFirst(e.target.value))} placeholder="Blanco" className="h-10 rounded-[10px]" />
               </Field>
             </div>
 
@@ -340,12 +340,12 @@ export function StockForm({ open, onClose, onSaved, editingAuto, usuarios }: Pro
             <div className="rounded-[10px] bg-muted px-3 py-2.5 flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Margen calculado</span>
               <span className={`text-sm font-semibold ${margen !== null ? (margen >= 0 ? "text-green-700" : "text-red-600") : "text-muted-foreground"}`}>
-                {margen !== null ? formatPriceARS(margen) : "—"}
+                {margen !== null ? formatPriceARS(margen) : "â€”"}
               </span>
             </div>
 
-            {/* Calificación precio */}
-            <Field label="Calificación precio">
+            {/* CalificaciÃ³n precio */}
+            <Field label="CalificaciÃ³n precio">
               <Select value={form.calificacion_precio} onValueChange={set("calificacion_precio")}>
                 <SelectTrigger className="w-full h-10 rounded-[10px]">
                   <SelectValue placeholder="Sin calificar" />
@@ -359,14 +359,14 @@ export function StockForm({ open, onClose, onSaved, editingAuto, usuarios }: Pro
               </Select>
             </Field>
 
-            {/* Más datos toggle */}
+            {/* MÃ¡s datos toggle */}
             <button
               type="button"
               onClick={() => setShowMore(!showMore)}
               className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               {showMore ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              {showMore ? "Ocultar datos adicionales" : "Más datos"}
+              {showMore ? "Ocultar datos adicionales" : "MÃ¡s datos"}
             </button>
 
             {showMore && (
@@ -377,53 +377,53 @@ export function StockForm({ open, onClose, onSaved, editingAuto, usuarios }: Pro
                   <Field label="Combustible">
                     <Select value={form.combustible} onValueChange={set("combustible")}>
                       <SelectTrigger className="w-full h-10 rounded-[10px]">
-                        <SelectValue placeholder="—" />
+                        <SelectValue placeholder="â€”" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">—</SelectItem>
+                        <SelectItem value="">â€”</SelectItem>
                         <SelectItem value="Nafta">Nafta</SelectItem>
-                        <SelectItem value="Diésel">Diésel</SelectItem>
+                        <SelectItem value="DiÃ©sel">DiÃ©sel</SelectItem>
                         <SelectItem value="GNC">GNC</SelectItem>
                         <SelectItem value="Nafta/GNC">Nafta/GNC</SelectItem>
-                        <SelectItem value="Híbrido">Híbrido</SelectItem>
-                        <SelectItem value="Eléctrico">Eléctrico</SelectItem>
+                        <SelectItem value="HÃ­brido">HÃ­brido</SelectItem>
+                        <SelectItem value="ElÃ©ctrico">ElÃ©ctrico</SelectItem>
                       </SelectContent>
                     </Select>
                   </Field>
                   <Field label="Caja">
                     <Select value={form.caja} onValueChange={set("caja")}>
                       <SelectTrigger className="w-full h-10 rounded-[10px]">
-                        <SelectValue placeholder="—" />
+                        <SelectValue placeholder="â€”" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">—</SelectItem>
+                        <SelectItem value="">â€”</SelectItem>
                         <SelectItem value="Manual">Manual</SelectItem>
-                        <SelectItem value="Automática">Automática</SelectItem>
+                        <SelectItem value="AutomÃ¡tica">AutomÃ¡tica</SelectItem>
                       </SelectContent>
                     </Select>
                   </Field>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="Tracción">
+                  <Field label="TracciÃ³n">
                     <Select value={form.traccion} onValueChange={set("traccion")}>
                       <SelectTrigger className="w-full h-10 rounded-[10px]">
-                        <SelectValue placeholder="—" />
+                        <SelectValue placeholder="â€”" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">—</SelectItem>
+                        <SelectItem value="">â€”</SelectItem>
                         <SelectItem value="4x2">4x2</SelectItem>
                         <SelectItem value="4x4">4x4</SelectItem>
                       </SelectContent>
                     </Select>
                   </Field>
-                  <Field label="Estado general (1–10)">
+                  <Field label="Estado general (1â€“10)">
                     <Select value={form.estado_general} onValueChange={set("estado_general")}>
                       <SelectTrigger className="w-full h-10 rounded-[10px]">
-                        <SelectValue placeholder="—" />
+                        <SelectValue placeholder="â€”" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">—</SelectItem>
+                        <SelectItem value="">â€”</SelectItem>
                         {Array.from({ length: 10 }, (_, i) => (
                           <SelectItem key={i + 1} value={String(i + 1)}>{i + 1}</SelectItem>
                         ))}
@@ -451,7 +451,7 @@ export function StockForm({ open, onClose, onSaved, editingAuto, usuarios }: Pro
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="Cotización USD">
+                  <Field label="CotizaciÃ³n USD">
                     <Input value={form.cotizacion_usd} onChange={(e) => set("cotizacion_usd")(e.target.value)} placeholder="0" className="h-10 rounded-[10px]" />
                   </Field>
                   <Field label="ITV vencimiento">
@@ -463,16 +463,16 @@ export function StockForm({ open, onClose, onSaved, editingAuto, usuarios }: Pro
                   <Field label="Tiene GNC">
                     <Select value={form.tiene_gnc} onValueChange={set("tiene_gnc")}>
                       <SelectTrigger className="w-full h-10 rounded-[10px]">
-                        <SelectValue placeholder="—" />
+                        <SelectValue placeholder="â€”" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="no">No</SelectItem>
-                        <SelectItem value="si">Sí</SelectItem>
+                        <SelectItem value="si">SÃ­</SelectItem>
                       </SelectContent>
                     </Select>
                   </Field>
-                  <Field label="Ubicación">
-                    <Input value={form.ubicacion} onChange={(e) => set("ubicacion")(e.target.value)} placeholder="Depósito A" className="h-10 rounded-[10px]" />
+                  <Field label="UbicaciÃ³n">
+                    <Input value={form.ubicacion} onChange={(e) => set("ubicacion")(capFirst(e.target.value))} placeholder="DepÃ³sito A" className="h-10 rounded-[10px]" />
                   </Field>
                 </div>
               </div>

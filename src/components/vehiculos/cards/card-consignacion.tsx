@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { FormCard } from "./form-card"
+import { capFirst } from "@/lib/utils"
 import type { ConsignaCardState } from "@/types/vehiculos"
 import type { UsuarioSimple } from "@/types/stock"
 
@@ -24,8 +25,8 @@ export function CardConsignacion({ value, onChange, usuarios }: Props) {
   return (
     <FormCard
       icon={Handshake}
-      title="Información de consignación"
-      subtitle="Responsable y datos del dueño del vehículo"
+      title="InformaciÃ³n de consignaciÃ³n"
+      subtitle="Responsable y datos del dueÃ±o del vehÃ­culo"
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-1.5">
@@ -54,7 +55,7 @@ export function CardConsignacion({ value, onChange, usuarios }: Props) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="fisica">Física</SelectItem>
+              <SelectItem value="fisica">FÃ­sica</SelectItem>
               <SelectItem value="virtual">Virtual</SelectItem>
             </SelectContent>
           </Select>
@@ -63,14 +64,14 @@ export function CardConsignacion({ value, onChange, usuarios }: Props) {
 
       <div className="space-y-4">
         <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground pt-1">
-          Información del cliente
+          InformaciÃ³n del cliente
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label>Nombre</Label>
             <Input
               value={value.duenio_nombre}
-              onChange={(e) => onChange({ duenio_nombre: e.target.value })}
+              onChange={(e) => onChange({ duenio_nombre: capFirst(e.target.value) })}
               placeholder="Juan"
               className="rounded-[10px]"
             />
@@ -79,15 +80,15 @@ export function CardConsignacion({ value, onChange, usuarios }: Props) {
             <Label>Apellido</Label>
             <Input
               value={value.duenio_apellido}
-              onChange={(e) => onChange({ duenio_apellido: e.target.value })}
-              placeholder="Pérez"
+              onChange={(e) => onChange({ duenio_apellido: capFirst(e.target.value) })}
+              placeholder="PÃ©rez"
               className="rounded-[10px]"
             />
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="space-y-1.5">
-            <Label>Teléfono</Label>
+            <Label>TelÃ©fono</Label>
             <Input
               value={value.duenio_telefono}
               onChange={(e) => onChange({ duenio_telefono: e.target.value })}
@@ -99,7 +100,7 @@ export function CardConsignacion({ value, onChange, usuarios }: Props) {
             <Label>Domicilio</Label>
             <Input
               value={value.duenio_domicilio}
-              onChange={(e) => onChange({ duenio_domicilio: e.target.value })}
+              onChange={(e) => onChange({ duenio_domicilio: capFirst(e.target.value) })}
               placeholder="Av. Corrientes 1234"
               className="rounded-[10px]"
             />

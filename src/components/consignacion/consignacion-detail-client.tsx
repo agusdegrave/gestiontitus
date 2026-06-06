@@ -17,7 +17,7 @@ import {
 import { useAuth } from "@/contexts/auth-context"
 import { fetchConsignacionById, updateAuto, updateConsignacionRecord, updateVerificacion, updateInforme } from "@/lib/consignacion"
 import { fetchUsuariosAgencia } from "@/lib/stock"
-import { formatPriceARS, parsePrice } from "@/lib/utils"
+import { formatPriceARS, parsePrice, capFirst } from "@/lib/utils"
 import { EstadoChip } from "@/components/stock/chips"
 import { TipoConsignaChip, VerifChip, InformeEstadoChip } from "./consignacion-chips"
 import type { ConsignacionRow, Consignacion, Verificacion, Informe } from "@/types/consignacion"
@@ -51,7 +51,7 @@ export function ConsignacionDetailClient({ autoId }: { autoId: string }) {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [usuarios, setUsuarios] = useState<UsuarioSimple[]>([])
 
-  // ── Auto section state ──
+  // â”€â”€ Auto section state â”€â”€
   const [autoForm, setAutoForm] = useState({
     dominio: "", marca: "", modelo: "", version: "", anio: "", km: "",
     color: "", combustible: "", precio_pretendido: "", precio_publicado: "",
@@ -62,7 +62,7 @@ export function ConsignacionDetailClient({ autoId }: { autoId: string }) {
   const [autoSaved, setAutoSaved] = useState(false)
   const [autoError, setAutoError] = useState<string | null>(null)
 
-  // ── Consignacion section state ──
+  // â”€â”€ Consignacion section state â”€â”€
   const [consigForm, setConsigForm] = useState({
     tipo: "fisica", exclusividad: "no", fecha_carga: "",
     duenio_nombre: "", duenio_apellido: "", duenio_dni: "",
@@ -72,7 +72,7 @@ export function ConsignacionDetailClient({ autoId }: { autoId: string }) {
   const [consigSaved, setConsigSaved] = useState(false)
   const [consigError, setConsigError] = useState<string | null>(null)
 
-  // ── Verificacion section state ──
+  // â”€â”€ Verificacion section state â”€â”€
   const [verifForm, setVerifForm] = useState({
     estado: "pendiente", fecha: "", turno: "", responsable_id: "", observaciones: "",
   })
@@ -80,7 +80,7 @@ export function ConsignacionDetailClient({ autoId }: { autoId: string }) {
   const [verifSaved, setVerifSaved] = useState(false)
   const [verifError, setVerifError] = useState<string | null>(null)
 
-  // ── Informes state ──
+  // â”€â”€ Informes state â”€â”€
   const [informeForms, setInformeForms] = useState<
     Record<string, { estado: string; aprobado: string; costo: string; pagado: string; observaciones: string }>
   >({})
@@ -179,7 +179,7 @@ export function ConsignacionDetailClient({ autoId }: { autoId: string }) {
     usuario.rol !== "alistaje" &&
     usuario.rol !== "consignatario"
 
-  // ── Handlers ────────────────────────
+  // â”€â”€ Handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async function handleSaveAuto() {
     if (!data) return
@@ -316,7 +316,7 @@ export function ConsignacionDetailClient({ autoId }: { autoId: string }) {
         </Button>
         <div className="flex-1">
           <h1 className="text-xl font-bold text-foreground font-mono">
-            {data.dominio || "—"}
+            {data.dominio || "â€”"}
             <span className="font-sans font-normal text-muted-foreground text-base ml-2">
               {data.marca} {data.modelo}
             </span>
@@ -329,7 +329,7 @@ export function ConsignacionDetailClient({ autoId }: { autoId: string }) {
         </div>
       </div>
 
-      {/* ── Sección: Auto ─────────────────────────────── */}
+      {/* â”€â”€ SecciÃ³n: Auto â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <SectionCard
         title="Datos del auto"
         footer={
@@ -372,7 +372,7 @@ export function ConsignacionDetailClient({ autoId }: { autoId: string }) {
                 <SelectItem value="por_ingresar">Por ingresar</SelectItem>
                 <SelectItem value="en_alistaje">En alistaje</SelectItem>
                 <SelectItem value="activo">Activo</SelectItem>
-                <SelectItem value="senado">Señado</SelectItem>
+                <SelectItem value="senado">SeÃ±ado</SelectItem>
                 <SelectItem value="vendido">Vendido</SelectItem>
               </SelectContent>
             </Select>
@@ -382,30 +382,30 @@ export function ConsignacionDetailClient({ autoId }: { autoId: string }) {
         <div className="grid grid-cols-3 gap-3">
           <div className="space-y-1.5">
             <Label>Marca</Label>
-            <Input value={autoForm.marca} onChange={(e) => setAutoForm((p) => ({ ...p, marca: e.target.value }))} disabled={!canEditAuto} className="rounded-[10px]" />
+            <Input value={autoForm.marca} onChange={(e) => setAutoForm((p) => ({ ...p, marca: capFirst(e.target.value) }))} disabled={!canEditAuto} className="rounded-[10px]" />
           </div>
           <div className="space-y-1.5">
             <Label>Modelo</Label>
-            <Input value={autoForm.modelo} onChange={(e) => setAutoForm((p) => ({ ...p, modelo: e.target.value }))} disabled={!canEditAuto} className="rounded-[10px]" />
+            <Input value={autoForm.modelo} onChange={(e) => setAutoForm((p) => ({ ...p, modelo: capFirst(e.target.value) }))} disabled={!canEditAuto} className="rounded-[10px]" />
           </div>
           <div className="space-y-1.5">
-            <Label>Versión</Label>
-            <Input value={autoForm.version} onChange={(e) => setAutoForm((p) => ({ ...p, version: e.target.value }))} disabled={!canEditAuto} className="rounded-[10px]" />
+            <Label>VersiÃ³n</Label>
+            <Input value={autoForm.version} onChange={(e) => setAutoForm((p) => ({ ...p, version: capFirst(e.target.value) }))} disabled={!canEditAuto} className="rounded-[10px]" />
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-3">
           <div className="space-y-1.5">
-            <Label>Año</Label>
+            <Label>AÃ±o</Label>
             <Input type="number" value={autoForm.anio} onChange={(e) => setAutoForm((p) => ({ ...p, anio: e.target.value }))} disabled={!canEditAuto} className="rounded-[10px]" />
           </div>
           <div className="space-y-1.5">
-            <Label>Kilómetros</Label>
+            <Label>KilÃ³metros</Label>
             <Input value={autoForm.km} onChange={(e) => setAutoForm((p) => ({ ...p, km: e.target.value }))} disabled={!canEditAuto} className="rounded-[10px]" />
           </div>
           <div className="space-y-1.5">
             <Label>Color</Label>
-            <Input value={autoForm.color} onChange={(e) => setAutoForm((p) => ({ ...p, color: e.target.value }))} disabled={!canEditAuto} className="rounded-[10px]" />
+            <Input value={autoForm.color} onChange={(e) => setAutoForm((p) => ({ ...p, color: capFirst(e.target.value) }))} disabled={!canEditAuto} className="rounded-[10px]" />
           </div>
         </div>
 
@@ -419,8 +419,8 @@ export function ConsignacionDetailClient({ autoId }: { autoId: string }) {
                 <SelectItem value="nafta">Nafta</SelectItem>
                 <SelectItem value="diesel">Diesel</SelectItem>
                 <SelectItem value="gnc">GNC</SelectItem>
-                <SelectItem value="hibrido">Híbrido</SelectItem>
-                <SelectItem value="electrico">Eléctrico</SelectItem>
+                <SelectItem value="hibrido">HÃ­brido</SelectItem>
+                <SelectItem value="electrico">ElÃ©ctrico</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -430,7 +430,7 @@ export function ConsignacionDetailClient({ autoId }: { autoId: string }) {
               <SelectTrigger className="rounded-[10px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="no">No</SelectItem>
-                <SelectItem value="si">Sí</SelectItem>
+                <SelectItem value="si">SÃ­</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -465,7 +465,7 @@ export function ConsignacionDetailClient({ autoId }: { autoId: string }) {
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <Label>Calificación precio</Label>
+            <Label>CalificaciÃ³n precio</Label>
             <Select value={autoForm.calificacion_precio || "none"} onValueChange={(v) => setAutoForm((p) => ({ ...p, calificacion_precio: v === "none" ? "" : (v ?? "") }))} disabled={!canEditAuto}>
               <SelectTrigger className="rounded-[10px]"><SelectValue placeholder="Sin calificar" /></SelectTrigger>
               <SelectContent>
@@ -494,8 +494,8 @@ export function ConsignacionDetailClient({ autoId }: { autoId: string }) {
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <Label>Ubicación</Label>
-            <Input value={autoForm.ubicacion} onChange={(e) => setAutoForm((p) => ({ ...p, ubicacion: e.target.value }))} disabled={!canEditAuto} className="rounded-[10px]" />
+            <Label>UbicaciÃ³n</Label>
+            <Input value={autoForm.ubicacion} onChange={(e) => setAutoForm((p) => ({ ...p, ubicacion: capFirst(e.target.value) }))} disabled={!canEditAuto} className="rounded-[10px]" />
           </div>
           <div className="space-y-1.5">
             <Label>ITV vence</Label>
@@ -504,10 +504,10 @@ export function ConsignacionDetailClient({ autoId }: { autoId: string }) {
         </div>
       </SectionCard>
 
-      {/* ── Sección: Consignación ──────────────────────── */}
+      {/* â”€â”€ SecciÃ³n: ConsignaciÃ³n â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {data.consignacion && (
         <SectionCard
-          title="Datos de la consignación"
+          title="Datos de la consignaciÃ³n"
           footer={
             canEditConsig ? (
               <>
@@ -530,7 +530,7 @@ export function ConsignacionDetailClient({ autoId }: { autoId: string }) {
               <Select value={consigForm.tipo} onValueChange={(v) => setConsigForm((p) => ({ ...p, tipo: v ?? "" }))} disabled={!canEditConsig}>
                 <SelectTrigger className="rounded-[10px]"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="fisica">Física</SelectItem>
+                  <SelectItem value="fisica">FÃ­sica</SelectItem>
                   <SelectItem value="virtual">Virtual</SelectItem>
                 </SelectContent>
               </Select>
@@ -541,7 +541,7 @@ export function ConsignacionDetailClient({ autoId }: { autoId: string }) {
                 <SelectTrigger className="rounded-[10px]"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="no">No</SelectItem>
-                  <SelectItem value="si">Sí</SelectItem>
+                  <SelectItem value="si">SÃ­</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -553,12 +553,12 @@ export function ConsignacionDetailClient({ autoId }: { autoId: string }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Nombre del dueño</Label>
-              <Input value={consigForm.duenio_nombre} onChange={(e) => setConsigForm((p) => ({ ...p, duenio_nombre: e.target.value }))} disabled={!canEditConsig} className="rounded-[10px]" />
+              <Label>Nombre del dueÃ±o</Label>
+              <Input value={consigForm.duenio_nombre} onChange={(e) => setConsigForm((p) => ({ ...p, duenio_nombre: capFirst(e.target.value) }))} disabled={!canEditConsig} className="rounded-[10px]" />
             </div>
             <div className="space-y-1.5">
-              <Label>Apellido del dueño</Label>
-              <Input value={consigForm.duenio_apellido} onChange={(e) => setConsigForm((p) => ({ ...p, duenio_apellido: e.target.value }))} disabled={!canEditConsig} className="rounded-[10px]" />
+              <Label>Apellido del dueÃ±o</Label>
+              <Input value={consigForm.duenio_apellido} onChange={(e) => setConsigForm((p) => ({ ...p, duenio_apellido: capFirst(e.target.value) }))} disabled={!canEditConsig} className="rounded-[10px]" />
             </div>
           </div>
 
@@ -568,14 +568,14 @@ export function ConsignacionDetailClient({ autoId }: { autoId: string }) {
               <Input value={consigForm.duenio_dni} onChange={(e) => setConsigForm((p) => ({ ...p, duenio_dni: e.target.value }))} disabled={!canEditConsig} className="rounded-[10px]" />
             </div>
             <div className="space-y-1.5">
-              <Label>Teléfono</Label>
+              <Label>TelÃ©fono</Label>
               <Input value={consigForm.duenio_telefono} onChange={(e) => setConsigForm((p) => ({ ...p, duenio_telefono: e.target.value }))} disabled={!canEditConsig} className="rounded-[10px]" />
             </div>
           </div>
 
           <div className="space-y-1.5">
             <Label>Domicilio</Label>
-            <Input value={consigForm.duenio_domicilio} onChange={(e) => setConsigForm((p) => ({ ...p, duenio_domicilio: e.target.value }))} disabled={!canEditConsig} className="rounded-[10px]" />
+            <Input value={consigForm.duenio_domicilio} onChange={(e) => setConsigForm((p) => ({ ...p, duenio_domicilio: capFirst(e.target.value) }))} disabled={!canEditConsig} className="rounded-[10px]" />
           </div>
 
           <div className="space-y-1.5">
@@ -585,10 +585,10 @@ export function ConsignacionDetailClient({ autoId }: { autoId: string }) {
         </SectionCard>
       )}
 
-      {/* ── Sección: Verificación ─────────────────────── */}
+      {/* â”€â”€ SecciÃ³n: VerificaciÃ³n â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {data.verificacion && (
         <SectionCard
-          title="Verificación"
+          title="VerificaciÃ³n"
           footer={
             canEditVerifInformes ? (
               <>
@@ -652,7 +652,7 @@ export function ConsignacionDetailClient({ autoId }: { autoId: string }) {
         </SectionCard>
       )}
 
-      {/* ── Sección: Informes ────────────────────────── */}
+      {/* â”€â”€ SecciÃ³n: Informes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {data.informes.length > 0 && (
         <SectionCard title="Informes">
           <div className="space-y-5">
@@ -688,7 +688,7 @@ export function ConsignacionDetailClient({ autoId }: { autoId: string }) {
                         <SelectTrigger className="rounded-[10px]"><SelectValue placeholder="Sin definir" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">Sin definir</SelectItem>
-                          <SelectItem value="si">Sí</SelectItem>
+                          <SelectItem value="si">SÃ­</SelectItem>
                           <SelectItem value="no">No</SelectItem>
                         </SelectContent>
                       </Select>
@@ -712,7 +712,7 @@ export function ConsignacionDetailClient({ autoId }: { autoId: string }) {
                         <SelectTrigger className="rounded-[10px]"><SelectValue placeholder="Sin definir" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">Sin definir</SelectItem>
-                          <SelectItem value="si">Sí</SelectItem>
+                          <SelectItem value="si">SÃ­</SelectItem>
                           <SelectItem value="no">No</SelectItem>
                         </SelectContent>
                       </Select>

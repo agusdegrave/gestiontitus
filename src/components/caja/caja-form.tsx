@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { saveCaja, updateCaja } from "@/lib/caja"
+import { capFirst } from "@/lib/utils"
 import { TIPOS_CAJA } from "@/types/caja"
 import type { Caja, TipoCaja, MonedaCaja } from "@/types/caja"
 import type { Gestor } from "@/types/gestoria"
@@ -102,7 +103,7 @@ export function CajaForm({ open, onClose, onSaved, caja, gestores }: Props) {
             <Label>Nombre *</Label>
             <Input
               value={form.nombre}
-              onChange={(e) => set("nombre")(e.target.value)}
+              onChange={(e) => set("nombre")(capFirst(e.target.value))}
               placeholder="Caja fuerte"
               className="rounded-[10px]"
             />

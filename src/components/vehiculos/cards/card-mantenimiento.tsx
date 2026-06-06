@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { FormCard } from "./form-card"
+import { capFirst } from "@/lib/utils"
 import type { MantenimientoCardState } from "@/types/vehiculos"
 
 interface Props {
@@ -21,26 +22,26 @@ interface Props {
 
 export function CardMantenimiento({ value, onChange }: Props) {
   return (
-    <FormCard icon={Wrench} title="Mantenimiento" subtitle="Distribución, service y otros datos mecánicos">
+    <FormCard icon={Wrench} title="Mantenimiento" subtitle="DistribuciÃ³n, service y otros datos mecÃ¡nicos">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="space-y-1.5">
-          <Label>Tipo de distribución</Label>
+          <Label>Tipo de distribuciÃ³n</Label>
           <Select
             value={value.tipo_distribucion || "none"}
             onValueChange={(v) => onChange({ tipo_distribucion: !v || v === "none" ? "" : v })}
           >
             <SelectTrigger className="rounded-[10px]">
-              <SelectValue placeholder="—" />
+              <SelectValue placeholder="â€”" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">—</SelectItem>
+              <SelectItem value="none">â€”</SelectItem>
               <SelectItem value="correa">Correa</SelectItem>
               <SelectItem value="cadena">Cadena</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-1.5">
-          <Label>Km cambio de distribución</Label>
+          <Label>Km cambio de distribuciÃ³n</Label>
           <Input
             type="number"
             value={value.km_cambio_distribucion}
@@ -66,7 +67,7 @@ export function CardMantenimiento({ value, onChange }: Props) {
         <Textarea
           value={value.otros_mantenimientos}
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-            onChange({ otros_mantenimientos: e.target.value })
+            onChange({ otros_mantenimientos: capFirst(e.target.value) })
           }
           placeholder="Cubiertas nuevas, frenos hechos, etc."
           className="rounded-[10px] resize-none"

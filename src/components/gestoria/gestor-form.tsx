@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { saveGestor, updateGestor } from "@/lib/gestoria"
-import { parsePrice, formatPriceARS } from "@/lib/utils"
+import { parsePrice, formatPriceARS, capFirst } from "@/lib/utils"
 import type { Gestor } from "@/types/gestoria"
 
 interface Props {
@@ -108,7 +108,7 @@ export function GestorForm({ open, onClose, onSaved, gestor }: Props) {
               <Label>Nombre *</Label>
               <Input
                 value={form.nombre}
-                onChange={(e) => set("nombre")(e.target.value)}
+                onChange={(e) => set("nombre")(capFirst(e.target.value))}
                 placeholder="Carflow"
                 className="rounded-[10px]"
               />
@@ -117,7 +117,7 @@ export function GestorForm({ open, onClose, onSaved, gestor }: Props) {
               <Label>Alias</Label>
               <Input
                 value={form.alias}
-                onChange={(e) => set("alias")(e.target.value)}
+                onChange={(e) => set("alias")(capFirst(e.target.value))}
                 placeholder="Ari"
                 className="rounded-[10px]"
               />
@@ -169,7 +169,7 @@ export function GestorForm({ open, onClose, onSaved, gestor }: Props) {
             <Label>Notas</Label>
             <Textarea
               value={form.notas}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => set("notas")(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => set("notas")(capFirst(e.target.value))}
               className="rounded-[10px] resize-none"
               rows={2}
             />

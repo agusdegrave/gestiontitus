@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { FormCard } from "./form-card"
+import { capFirst } from "@/lib/utils"
 import type { VehiculoCardState } from "@/types/vehiculos"
 
 interface Props {
@@ -20,16 +21,16 @@ interface Props {
 
 const COMBUSTIBLES = [
   { value: "nafta", label: "Nafta" },
-  { value: "diesel", label: "Diésel" },
+  { value: "diesel", label: "DiÃ©sel" },
   { value: "gnc", label: "GNC" },
   { value: "nafta_gnc", label: "Nafta/GNC" },
-  { value: "hibrido", label: "Híbrido" },
-  { value: "electrico", label: "Eléctrico" },
+  { value: "hibrido", label: "HÃ­brido" },
+  { value: "electrico", label: "ElÃ©ctrico" },
 ]
 
 export function CardVehiculo({ value, onChange }: Props) {
   return (
-    <FormCard icon={Car} title="Información del vehículo" subtitle="Datos principales del auto">
+    <FormCard icon={Car} title="InformaciÃ³n del vehÃ­culo" subtitle="Datos principales del auto">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="space-y-1.5">
           <Label>Dominio <span className="text-destructive">*</span></Label>
@@ -44,7 +45,7 @@ export function CardVehiculo({ value, onChange }: Props) {
           <Label>Marca</Label>
           <Input
             value={value.marca}
-            onChange={(e) => onChange({ marca: e.target.value })}
+            onChange={(e) => onChange({ marca: capFirst(e.target.value) })}
             placeholder="Toyota"
             className="rounded-[10px]"
           />
@@ -53,7 +54,7 @@ export function CardVehiculo({ value, onChange }: Props) {
           <Label>Modelo</Label>
           <Input
             value={value.modelo}
-            onChange={(e) => onChange({ modelo: e.target.value })}
+            onChange={(e) => onChange({ modelo: capFirst(e.target.value) })}
             placeholder="Corolla"
             className="rounded-[10px]"
           />
@@ -62,16 +63,16 @@ export function CardVehiculo({ value, onChange }: Props) {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="space-y-1.5">
-          <Label>Versión</Label>
+          <Label>VersiÃ³n</Label>
           <Input
             value={value.version}
-            onChange={(e) => onChange({ version: e.target.value })}
+            onChange={(e) => onChange({ version: capFirst(e.target.value) })}
             placeholder="XEi"
             className="rounded-[10px]"
           />
         </div>
         <div className="space-y-1.5">
-          <Label>Año</Label>
+          <Label>AÃ±o</Label>
           <Input
             type="number"
             value={value.anio}
@@ -86,7 +87,7 @@ export function CardVehiculo({ value, onChange }: Props) {
           <Label>Color</Label>
           <Input
             value={value.color}
-            onChange={(e) => onChange({ color: e.target.value })}
+            onChange={(e) => onChange({ color: capFirst(e.target.value) })}
             placeholder="Blanco"
             className="rounded-[10px]"
           />
@@ -95,7 +96,7 @@ export function CardVehiculo({ value, onChange }: Props) {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="space-y-1.5">
-          <Label>Kilómetros</Label>
+          <Label>KilÃ³metros</Label>
           <Input
             value={value.km}
             onChange={(e) => onChange({ km: e.target.value })}
@@ -110,7 +111,7 @@ export function CardVehiculo({ value, onChange }: Props) {
             onValueChange={(v) => onChange({ combustible: !v || v === "none" ? "" : v })}
           >
             <SelectTrigger className="rounded-[10px]">
-              <SelectValue placeholder="Seleccioná" />
+              <SelectValue placeholder="SeleccionÃ¡" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="none">Sin especificar</SelectItem>
