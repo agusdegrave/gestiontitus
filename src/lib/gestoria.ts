@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/client"
-import type { Gestor, GestoriaParametros } from "@/types/gestoria"
+import type { Gestor, GestoriaParametros, Tramite, TramiteFilters } from "@/types/gestoria"
+
+export const TRAMITES_PAGE_SIZE = 30
 
 export async function fetchGestores(): Promise<{ data: Gestor[]; error: { message: string } | null }> {
   const supabase = createClient()
@@ -34,4 +36,61 @@ export async function updateGestor(id: string, payload: Record<string, unknown>)
 export async function deleteGestor(id: string) {
   const supabase = createClient()
   return supabase.from("gestores").delete().eq("id", id)
+}
+
+// ── Trámites ─────────────────────────────────────────────
+
+function applyTramiteFilters<T extends { or: (f: string) => T; eq: (c: string, v: string) => T }>(
+  query: T,
+  filters: TramiteFilters
+): T {
+  if (filters.search.trim()) {
+    const s = filters.search.trim()
+    query = query.or(`dominio.ilike.%${s}%,vehiculo.ilike.%${s}%`)
+  }
+  if (filters.gestor_id) query = query.eq("gestor_id", filters.gestor_id)
+  if (filters.estado) query = query.eq("estado", filters.estado)
+  return query
+}
+
+export async function fetchTramites(filters: TramiteFilters, page: number) {
+  const supabase = createClient()
+  const query = supabase
+    .from("tramites")
+    .select("*, gestores(nombre, alias)", { count: "exact" })
+    .order("creado_en", { ascending: false })
+    .range(page * TRAMITES_PAGE_SIZE, (page + 1) * TRAMITES_PAGE_SIZE - 1)
+  return applyTramiteFilters(query, filters)
+}
+
+// Totales del filtro actual (todas las páginas): solo las dos ganancias
+export async function fetchTramitesTotales(filters: TramiteFilters): Promise<{
+  transferencia: number
+  deudas: number
+}> {
+  const supabase = createClient()
+  const query = supabase.from("tramites").select("ganancia_transferencia, ganancia_deudas")
+  const { data } = await applyTramiteFilters(query, filters)
+  const rows = (data as Pick<Tramite, "ganancia_transferencia" | "ganancia_deudas">[] | null) ?? []
+  return {
+    transferencia: rows.reduce((acc, r) => acc + (r.ganancia_transferencia ?? 0), 0),
+    deudas: rows.reduce((acc, r) => acc + (r.ganancia_deudas ?? 0), 0),
+  }
+}
+
+// INSERT/UPDATE: NO mandar ganancia_transferencia ni ganancia_deudas (las calcula
+// la base), ni agencia_id ni auditoría (los completa la base).
+export async function saveTramite(payload: Record<string, unknown>) {
+  const supabase = createClient()
+  return supabase.from("tramites").insert(payload)
+}
+
+export async function updateTramite(id: string, payload: Record<string, unknown>) {
+  const supabase = createClient()
+  return supabase.from("tramites").update(payload).eq("id", id)
+}
+
+export async function deleteTramite(id: string) {
+  const supabase = createClient()
+  return supabase.from("tramites").delete().eq("id", id)
 }

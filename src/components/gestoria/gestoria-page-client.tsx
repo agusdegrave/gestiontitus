@@ -5,9 +5,11 @@ import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/auth-context"
 import { CalculadoraTab } from "./calculadora-tab"
 import { GestoresTab } from "./gestores-tab"
+import { TramitesTab } from "./tramites-tab"
 
-// Más adelante se suman "Trámites" y "Cajas"
+// Más adelante se suman las "Cajas"
 const TABS = [
+  { id: "tramites", label: "Trámites" },
   { id: "calculadora", label: "Calculadora" },
   { id: "gestores", label: "Gestores" },
 ] as const
@@ -16,7 +18,7 @@ type TabId = (typeof TABS)[number]["id"]
 
 export function GestoriaPageClient() {
   const { usuario } = useAuth()
-  const [tab, setTab] = useState<TabId>("calculadora")
+  const [tab, setTab] = useState<TabId>("tramites")
 
   if (!usuario) return null
 
@@ -26,7 +28,7 @@ export function GestoriaPageClient() {
       <div>
         <h1 className="text-xl font-bold text-foreground">Gestoría</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Calculadora de transferencias y gestores
+          Trámites, calculadora de transferencias y gestores
         </p>
       </div>
 
@@ -49,7 +51,9 @@ export function GestoriaPageClient() {
         ))}
       </div>
 
-      {tab === "calculadora" ? <CalculadoraTab /> : <GestoresTab />}
+      {tab === "tramites" && <TramitesTab />}
+      {tab === "calculadora" && <CalculadoraTab />}
+      {tab === "gestores" && <GestoresTab />}
     </div>
   )
 }
