@@ -10,7 +10,9 @@ import { OperacionesFilters } from "./operaciones-filters"
 import { OperacionesTable } from "./operaciones-table"
 import type { Venta, Tarea, VentaFilters } from "@/types/ventas"
 
-const EMPTY_FILTERS: VentaFilters = { search: "", estado_operacion: "" }
+// Por defecto la lista muestra solo las ventas en curso (señado + en proceso);
+// las entregadas se ven eligiendo "Entregadas" o "Todas" en el filtro.
+const EMPTY_FILTERS: VentaFilters = { search: "", estado_operacion: "en_curso" }
 
 const ROLES_TAREAS = ["administracion", "direccion"]
 

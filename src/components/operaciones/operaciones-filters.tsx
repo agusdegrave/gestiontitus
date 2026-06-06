@@ -30,15 +30,16 @@ export function OperacionesFilters({ filters, total, loading, onChange }: Props)
         className="h-9 rounded-[10px] w-64"
       />
 
-      <Select value={filters.estado_operacion} onValueChange={set("estado_operacion")}>
+      <Select value={filters.estado_operacion || "en_curso"} onValueChange={set("estado_operacion")}>
         <SelectTrigger className="h-9 rounded-[10px] w-36">
           <SelectValue placeholder="Estado" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Todos los estados</SelectItem>
+          <SelectItem value="en_curso">En curso</SelectItem>
           <SelectItem value="senado">Señado</SelectItem>
           <SelectItem value="en_proceso">En proceso</SelectItem>
-          <SelectItem value="entregado">Entregado</SelectItem>
+          <SelectItem value="entregado">Entregadas</SelectItem>
+          <SelectItem value="all">Todas</SelectItem>
         </SelectContent>
       </Select>
 

@@ -50,7 +50,11 @@ export async function fetchVentas(filters: VentaFilters, page: number) {
     }
   }
 
-  if (filters.estado_operacion && filters.estado_operacion !== "all") {
+  // "en_curso" (default): la lista principal es para ventas en curso;
+  // las entregadas se ven con el filtro Entregadas o Todas.
+  if (!filters.estado_operacion || filters.estado_operacion === "en_curso") {
+    query = query.in("estado_operacion", ["senado", "en_proceso"])
+  } else if (filters.estado_operacion !== "all") {
     query = query.eq("estado_operacion", filters.estado_operacion)
   }
 
