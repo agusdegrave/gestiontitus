@@ -1,13 +1,13 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { ChevronLeft, ChevronRight, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/auth-context"
 import { fetchVentas, fetchTareas, completarTarea, normalizeVenta, PAGE_SIZE } from "@/lib/ventas"
 import { OperacionesFilters } from "./operaciones-filters"
 import { OperacionesTable } from "./operaciones-table"
-import { VentaDetail } from "@/components/ventas/venta-detail"
 import type { Venta, Tarea, VentaFilters } from "@/types/ventas"
 
 const EMPTY_FILTERS: VentaFilters = { search: "", estado_operacion: "" }
@@ -16,6 +16,7 @@ const ROLES_TAREAS = ["administracion", "direccion"]
 
 export function OperacionesPageClient() {
   const { usuario } = useAuth()
+  const router = useRouter()
 
   const [ventas, setVentas] = useState<Venta[]>([])
   const [total, setTotal] = useState(0)
@@ -29,8 +30,6 @@ export function OperacionesPageClient() {
   const [tareas, setTareas] = useState<Tarea[]>([])
   const [loadingTareas, setLoadingTareas] = useState(false)
   const [completandoId, setCompletandoId] = useState<string | null>(null)
-
-  const [detailVenta, setDetailVenta] = useState<Venta | null>(null)
 
   const canVerTareas = usuario ? ROLES_TAREAS.includes(usuario.rol) : false
 
@@ -163,7 +162,7 @@ export function OperacionesPageClient() {
       <OperacionesTable
         ventas={ventas}
         loading={loading}
-        onView={(v) => setDetailVenta(v)}
+        onView={(v: Venta) => router.push(`/operaciones/${v.id}`)}
       />
 
       {/* Pagination */}
@@ -196,13 +195,6 @@ export function OperacionesPageClient() {
           </div>
         </div>
       )}
-
-      {/* Detail dialog */}
-      <VentaDetail
-        venta={detailVenta}
-        open={!!detailVenta}
-        onClose={() => setDetailVenta(null)}
-      />
     </div>
   )
 }

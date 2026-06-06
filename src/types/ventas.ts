@@ -1,9 +1,9 @@
-export type EstadoOperacion = "senado" | "entregado" | "cancelado"
+export type EstadoOperacion = "senado" | "en_proceso" | "entregado"
 
 export const ESTADO_OPERACION_LABELS: Record<EstadoOperacion, string> = {
   senado: "Señado",
+  en_proceso: "En proceso",
   entregado: "Entregado",
-  cancelado: "Cancelado",
 }
 
 export const FINANCIERAS = [
@@ -15,6 +15,19 @@ export const FINANCIERAS = [
   "Carfácil",
   "Otra",
 ] as const
+
+// Checklist de hitos de entrega: campo en ventas → etiqueta en UI
+export const CHECKLIST_ENTREGA = [
+  { field: "entrega_planilla_ok", label: "Planilla de ventas" },
+  { field: "entrega_checklist_ok", label: "Check list" },
+  { field: "entrega_08_ok", label: "08 firmado" },
+  { field: "entrega_veri_ok", label: "Verificación" },
+  { field: "entrega_seguro_ok", label: "Seguro" },
+  { field: "entrega_control_ok", label: "Control de entrega" },
+  { field: "entrega_legajo_ok", label: "Legajo enviado" },
+] as const
+
+export type ChecklistField = (typeof CHECKLIST_ENTREGA)[number]["field"]
 
 export interface Venta {
   id: string
@@ -38,17 +51,41 @@ export interface Venta {
   comprador_dni: string | null
   comprador_domicilio: string | null
   comprador_telefono: string | null
+  // Seguimiento / entrega
+  fecha_tentativa_entrega: string | null
+  fecha_entrega: string | null
+  costo_transferencia: number | null
+  promesas_alistaje: string | null
+  aclaraciones: string | null
+  entrega_planilla_ok: boolean
+  entrega_checklist_ok: boolean
+  entrega_08_ok: boolean
+  entrega_veri_ok: boolean
+  entrega_seguro_ok: boolean
+  entrega_control_ok: boolean
+  entrega_legajo_ok: boolean
   creado_en: string | null
   autos?: {
     dominio: string
     marca: string
     modelo: string
     anio: number | null
+    estado?: import("./stock").EstadoAuto
   } | null
   vendedor?: {
     nombre: string
     apellido: string
   } | null
+  auto_entrega?: {
+    dominio: string
+    marca: string
+    modelo: string
+  } | null
+}
+
+export function checklistProgress(v: Venta): { done: number; total: number } {
+  const done = CHECKLIST_ENTREGA.filter((c) => v[c.field]).length
+  return { done, total: CHECKLIST_ENTREGA.length }
 }
 
 export interface Tarea {

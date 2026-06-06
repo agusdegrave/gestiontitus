@@ -2,7 +2,8 @@
 
 import { Eye } from "lucide-react"
 import { formatPriceARS } from "@/lib/utils"
-import { ESTADO_OPERACION_LABELS } from "@/types/ventas"
+import { checklistProgress } from "@/types/ventas"
+import { EstadoOperacionChip, PagoChip } from "./operacion-chips"
 import type { Venta } from "@/types/ventas"
 
 interface Props {
@@ -41,6 +42,7 @@ export function OperacionesTable({ ventas, loading, onView }: Props) {
             <Th className="text-right">Precio venta</Th>
             <Th>Pago</Th>
             <Th>Estado</Th>
+            <Th>Checklist</Th>
             <Th className="w-10" />
           </tr>
         </thead>
@@ -51,6 +53,7 @@ export function OperacionesTable({ ventas, loading, onView }: Props) {
             const haContado = (v.paga_contado ?? 0) > 0
             const haPermuta = (v.paga_permuta ?? 0) > 0
             const haFinanciado = (v.paga_financiado ?? 0) > 0
+            const progreso = checklistProgress(v)
 
             return (
               <tr
@@ -95,7 +98,12 @@ export function OperacionesTable({ ventas, loading, onView }: Props) {
                   </div>
                 </Td>
                 <Td>
-                  <EstadoChip estado={v.estado_operacion} />
+                  <EstadoOperacionChip estado={v.estado_operacion} />
+                </Td>
+                <Td>
+                  <span className={`tabular-nums text-xs font-medium ${progreso.done === progreso.total ? "text-green-600" : "text-muted-foreground"}`}>
+                    {progreso.done}/{progreso.total}
+                  </span>
                 </Td>
                 <Td>
                   <button
@@ -128,31 +136,5 @@ function Td({ children, className }: { children?: React.ReactNode; className?: s
     <td className={`px-3 py-2.5 align-middle whitespace-nowrap ${className ?? ""}`}>
       {children}
     </td>
-  )
-}
-
-function EstadoChip({ estado }: { estado: Venta["estado_operacion"] }) {
-  const styles: Record<string, string> = {
-    senado: "bg-blue-100 text-blue-700",
-    entregado: "bg-green-100 text-green-700",
-    cancelado: "bg-red-100 text-red-700",
-  }
-  return (
-    <span className={`inline-flex items-center rounded-[8px] px-2 py-0.5 text-xs font-medium ${styles[estado] ?? "bg-stone-100 text-stone-600"}`}>
-      {ESTADO_OPERACION_LABELS[estado] ?? estado}
-    </span>
-  )
-}
-
-function PagoChip({ label, color }: { label: string; color: "green" | "purple" | "blue" }) {
-  const styles = {
-    green: "bg-green-100 text-green-700",
-    purple: "bg-purple-100 text-purple-700",
-    blue: "bg-blue-100 text-blue-700",
-  }
-  return (
-    <span className={`inline-flex items-center rounded-[8px] px-2 py-0.5 text-xs font-medium ${styles[color]}`}>
-      {label}
-    </span>
   )
 }

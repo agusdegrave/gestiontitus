@@ -1,25 +1,30 @@
 import { createClient } from "@/lib/supabase/client"
 import type { Venta, VentaFilters, Tarea } from "@/types/ventas"
+import type { Verificacion, Informe } from "@/types/consignacion"
 
 export const PAGE_SIZE = 30
+
+const VENTA_SELECT = `id, auto_id, auto_entrega_id, estado_operacion,
+   fecha_senia, senia, lugar_senia,
+   vendedor_id, procedencia, precio_venta,
+   paga_contado, paga_permuta, paga_financiado,
+   financiera, cantidad_cuotas, costo_prenda,
+   comprador_nombre, comprador_apellido, comprador_dni,
+   comprador_domicilio, comprador_telefono, creado_en,
+   fecha_tentativa_entrega, fecha_entrega, costo_transferencia,
+   promesas_alistaje, aclaraciones,
+   entrega_planilla_ok, entrega_checklist_ok, entrega_08_ok,
+   entrega_veri_ok, entrega_seguro_ok, entrega_control_ok, entrega_legajo_ok,
+   autos!ventas_auto_id_fkey(dominio, marca, modelo, anio, estado),
+   vendedor:usuarios!ventas_vendedor_id_fkey(nombre, apellido),
+   auto_entrega:autos!ventas_auto_entrega_id_fkey(dominio, marca, modelo)`
 
 export async function fetchVentas(filters: VentaFilters, page: number) {
   const supabase = createClient()
 
   let query = supabase
     .from("ventas")
-    .select(
-      `id, auto_id, auto_entrega_id, estado_operacion,
-       fecha_senia, senia, lugar_senia,
-       vendedor_id, procedencia, precio_venta,
-       paga_contado, paga_permuta, paga_financiado,
-       financiera, cantidad_cuotas, costo_prenda,
-       comprador_nombre, comprador_apellido, comprador_dni,
-       comprador_domicilio, comprador_telefono, creado_en,
-       autos!ventas_auto_id_fkey(dominio, marca, modelo, anio),
-       vendedor:usuarios!ventas_vendedor_id_fkey(nombre, apellido)`,
-      { count: "exact" }
-    )
+    .select(VENTA_SELECT, { count: "exact" })
     .order("creado_en", { ascending: false })
     .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
 
@@ -47,6 +52,41 @@ export async function fetchVentas(filters: VentaFilters, page: number) {
   }
 
   return query
+}
+
+export async function fetchVentaById(id: string) {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from("ventas")
+    .select(VENTA_SELECT)
+    .eq("id", id)
+    .single()
+
+  if (error || !data) return { data: null, error }
+  return { data: normalizeVenta(data), error: null }
+}
+
+// Verificación e informes del auto vendido (solo lectura en la ficha de operación)
+export async function fetchSeguimientoAuto(autoId: string): Promise<{
+  verificacion: Verificacion | null
+  informes: Informe[]
+}> {
+  const supabase = createClient()
+  const [verifRes, infRes] = await Promise.all([
+    supabase.from("verificacion").select("*").eq("auto_id", autoId).maybeSingle(),
+    supabase.from("informes").select("*").eq("auto_id", autoId).order("tipo"),
+  ])
+  return {
+    verificacion: (verifRes.data as Verificacion | null) ?? null,
+    informes: (infRes.data as Informe[] | null) ?? [],
+  }
+}
+
+// UPDATE de seguimiento: NO mandar agencia_id ni auditoría (los completa la base).
+// Al pasar estado_operacion a 'entregado' un trigger marca el auto como 'vendido'.
+export async function updateVenta(id: string, payload: Record<string, unknown>) {
+  const supabase = createClient()
+  return supabase.from("ventas").update(payload).eq("id", id)
 }
 
 interface PermutaPayload {
@@ -145,10 +185,11 @@ export async function completarTarea(id: string) {
 }
 
 export function normalizeVenta(row: unknown): Venta {
-  const r = row as Venta & { autos: unknown; vendedor: unknown }
+  const r = row as Venta & { autos: unknown; vendedor: unknown; auto_entrega: unknown }
   return {
     ...r,
     autos: Array.isArray(r.autos) ? (r.autos[0] ?? null) : (r.autos as Venta["autos"]),
     vendedor: Array.isArray(r.vendedor) ? (r.vendedor[0] ?? null) : (r.vendedor as Venta["vendedor"]),
+    auto_entrega: Array.isArray(r.auto_entrega) ? (r.auto_entrega[0] ?? null) : (r.auto_entrega as Venta["auto_entrega"]),
   }
 }

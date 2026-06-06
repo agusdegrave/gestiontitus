@@ -37,8 +37,8 @@ export function OperacionesFilters({ filters, total, loading, onChange }: Props)
         <SelectContent>
           <SelectItem value="all">Todos los estados</SelectItem>
           <SelectItem value="senado">Señado</SelectItem>
+          <SelectItem value="en_proceso">En proceso</SelectItem>
           <SelectItem value="entregado">Entregado</SelectItem>
-          <SelectItem value="cancelado">Cancelado</SelectItem>
         </SelectContent>
       </Select>
 
