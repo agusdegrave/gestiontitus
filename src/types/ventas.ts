@@ -241,6 +241,16 @@ export function totalDeudasVenta(v: Venta): number {
   ].reduce<number>((acc, d) => acc + (d ?? 0), 0)
 }
 
+// Ítems libres del estado de cuenta de la operación (card Números)
+export interface OperacionItem {
+  id: string
+  venta_id: string
+  concepto: string
+  monto: number
+  signo: 1 | -1
+  bloque: "principal" | "permuta"
+}
+
 export interface Tarea {
   id: string
   titulo: string

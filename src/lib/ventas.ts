@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client"
-import type { Venta, VentaFilters, Tarea, Financiacion } from "@/types/ventas"
+import type { Venta, VentaFilters, Tarea, Financiacion, OperacionItem } from "@/types/ventas"
 import type { Verificacion, Informe } from "@/types/consignacion"
 
 export const PAGE_SIZE = 30
@@ -112,6 +112,41 @@ export async function upsertFinanciacion(ventaId: string, payload: Record<string
   return supabase
     .from("financiacion")
     .upsert({ venta_id: ventaId, ...payload }, { onConflict: "venta_id" })
+}
+
+// ── Ítems libres del estado de cuenta (card Números) ─────
+// INSERT/UPDATE: NO mandar agencia_id ni auditoría (los completa la base).
+
+export async function fetchOperacionItems(ventaId: string): Promise<{
+  data: OperacionItem[]
+  error: { message: string } | null
+}> {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from("operacion_items")
+    .select("id, venta_id, concepto, monto, signo, bloque")
+    .eq("venta_id", ventaId)
+    .order("creado_en", { ascending: true })
+  return { data: (data as OperacionItem[] | null) ?? [], error }
+}
+
+export async function insertOperacionItem(payload: Record<string, unknown>) {
+  const supabase = createClient()
+  return supabase
+    .from("operacion_items")
+    .insert(payload)
+    .select("id, venta_id, concepto, monto, signo, bloque")
+    .single()
+}
+
+export async function updateOperacionItem(id: string, payload: Record<string, unknown>) {
+  const supabase = createClient()
+  return supabase.from("operacion_items").update(payload).eq("id", id)
+}
+
+export async function deleteOperacionItem(id: string) {
+  const supabase = createClient()
+  return supabase.from("operacion_items").delete().eq("id", id)
 }
 
 // UPDATE de seguimiento: NO mandar agencia_id ni auditoría (los completa la base).

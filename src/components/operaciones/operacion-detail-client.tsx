@@ -20,6 +20,7 @@ import { formatPriceARS, formatDateAR, parsePrice, capFirst, cn } from "@/lib/ut
 import { EstadoChip } from "@/components/stock/chips"
 import { VerifChip, InformeEstadoChip } from "@/components/consignacion/consignacion-chips"
 import { EstadoOperacionChip, PagoChip } from "./operacion-chips"
+import { NumerosCard } from "./numeros-card"
 import { CHECKLIST_ENTREGA, BANCOS_FINANCIACION, FINANCIACION_CHECKLIST, normalizeBanco } from "@/types/ventas"
 import type {
   Venta,
@@ -769,6 +770,12 @@ export function OperacionDetailClient({ ventaId, embedded = false, onSaved }: {
           )}
         </SectionCard>
       )}
+
+      {/* ── Números: estado de cuenta de la operación ── */}
+      <SectionCard title="Números">
+        {/* key por venta + datos: rearma los ítems automáticos al refrescar la venta */}
+        <NumerosCard venta={venta} canEdit={canEdit} />
+      </SectionCard>
 
       {/* ── Checklist de entrega (editable) ──────────── */}
       <SectionCard title="Checklist de entrega" footer={saveControls}>
