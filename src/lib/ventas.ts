@@ -4,17 +4,22 @@ import type { Verificacion, Informe } from "@/types/consignacion"
 
 export const PAGE_SIZE = 30
 
-// Select MÍNIMO para la lista: sin auto_entrega ni textos de seguimiento.
+// Select para la lista de tarjetas: sin auto_entrega ni textos de seguimiento.
 // Un error en cualquier embed tira la query entera, así que la lista
-// solo embebe lo imprescindible (auto y vendedor, con FK explícito).
+// solo embebe lo imprescindible (auto, vendedor y financiacion, con FK explícito).
+// financiacion va embebida para calcular el progreso global sin N+1.
 const VENTA_LIST_SELECT = `id, auto_id, auto_entrega_id, estado_operacion,
    fecha_senia, senia, vendedor_id, precio_venta,
-   paga_contado, paga_permuta, paga_financiado,
+   paga_contado, paga_permuta, paga_financiado, financiera,
+   fecha_tentativa_entrega, fecha_entrega,
    comprador_nombre, comprador_apellido, creado_en,
    entrega_planilla_ok, entrega_checklist_ok, entrega_08_ok,
    entrega_veri_ok, entrega_seguro_ok, entrega_control_ok, entrega_legajo_ok,
-   autos!ventas_auto_id_fkey(dominio, marca, modelo, anio),
-   vendedor:usuarios!ventas_vendedor_id_fkey(nombre, apellido)`
+   deuda_muni, deuda_rentas, deuda_multas, gastos_consigna,
+   deuda_permuta_muni, deuda_permuta_rentas, deuda_permuta_multas,
+   autos!ventas_auto_id_fkey(dominio, marca, modelo, anio, tipo),
+   vendedor:usuarios!ventas_vendedor_id_fkey(nombre, apellido),
+   financiacion(*)`
 
 // Select completo solo para la FICHA (detalle)
 const VENTA_DETAIL_SELECT = `*,
@@ -212,11 +217,12 @@ export async function completarTarea(id: string) {
 }
 
 export function normalizeVenta(row: unknown): Venta {
-  const r = row as Venta & { autos: unknown; vendedor: unknown; auto_entrega: unknown }
+  const r = row as Venta & { autos: unknown; vendedor: unknown; auto_entrega: unknown; financiacion: unknown }
   return {
     ...r,
     autos: Array.isArray(r.autos) ? (r.autos[0] ?? null) : (r.autos as Venta["autos"]),
     vendedor: Array.isArray(r.vendedor) ? (r.vendedor[0] ?? null) : (r.vendedor as Venta["vendedor"]),
     auto_entrega: Array.isArray(r.auto_entrega) ? (r.auto_entrega[0] ?? null) : (r.auto_entrega as Venta["auto_entrega"]),
+    financiacion: Array.isArray(r.financiacion) ? (r.financiacion[0] ?? null) : (r.financiacion as Venta["financiacion"]),
   }
 }

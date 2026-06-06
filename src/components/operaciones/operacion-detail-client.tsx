@@ -20,7 +20,7 @@ import { formatPriceARS, formatDateAR, parsePrice, cn } from "@/lib/utils"
 import { EstadoChip } from "@/components/stock/chips"
 import { VerifChip, InformeEstadoChip } from "@/components/consignacion/consignacion-chips"
 import { EstadoOperacionChip, PagoChip } from "./operacion-chips"
-import { CHECKLIST_ENTREGA, BANCOS_FINANCIACION, FINANCIACION_CHECKLIST } from "@/types/ventas"
+import { CHECKLIST_ENTREGA, BANCOS_FINANCIACION, FINANCIACION_CHECKLIST, normalizeBanco } from "@/types/ventas"
 import type {
   Venta,
   EstadoOperacion,
@@ -58,16 +58,6 @@ const FIN_BOOL_FIELDS: FinanciacionBoolField[] = Object.values(FINANCIACION_CHEC
       it.kind === "check" ? [it.field] : it.kind === "docs" ? it.items.map((d) => d.field) : []
     )
 )
-
-// Valores viejos del selector de alta ("Bancor", "Galicia"...) → opción agrupada actual
-function normalizeBanco(f: string | null): "" | BancoFinanciacion {
-  if (!f) return ""
-  if ((BANCOS_FINANCIACION as readonly string[]).includes(f)) return f as BancoFinanciacion
-  if (f === "Bancor" || f === "Nación") return "Bancor / Nación"
-  if (f === "Santander" || f === "Galicia") return "Santander / Galicia"
-  if (f === "Carfácil") return "Carfácil / Finanzas"
-  return "Otra"
-}
 
 interface FinanciacionForm {
   financiera: "" | BancoFinanciacion
@@ -202,7 +192,13 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
   )
 }
 
-export function OperacionDetailClient({ ventaId }: { ventaId: string }) {
+// embedded: dentro del acordeón de la lista (sin header ni botón Volver).
+// onSaved: avisa a la lista para refrescar progreso/badge de la tarjeta.
+export function OperacionDetailClient({ ventaId, embedded = false, onSaved }: {
+  ventaId: string
+  embedded?: boolean
+  onSaved?: () => void
+}) {
   const { usuario } = useAuth()
   const router = useRouter()
 
@@ -243,7 +239,7 @@ export function OperacionDetailClient({ ventaId }: { ventaId: string }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24">
+      <div className={cn("flex items-center justify-center", embedded ? "py-10" : "py-24")}>
         <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
       </div>
     )
@@ -253,9 +249,11 @@ export function OperacionDetailClient({ ventaId }: { ventaId: string }) {
     return (
       <div className="text-center py-16">
         <p className="text-sm text-muted-foreground">{loadError ?? "No encontrada."}</p>
-        <Button variant="outline" onClick={() => router.push("/operaciones")} className="mt-4 rounded-[10px]">
-          Volver
-        </Button>
+        {!embedded && (
+          <Button variant="outline" onClick={() => router.push("/operaciones")} className="mt-4 rounded-[10px]">
+            Volver
+          </Button>
+        )}
       </div>
     )
   }
@@ -384,6 +382,8 @@ export function OperacionDetailClient({ ventaId }: { ventaId: string }) {
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
+    // Refresca progreso/badge de la tarjeta en la lista
+    onSaved?.()
   }
 
   const saveControls = canEdit ? (
@@ -413,34 +413,36 @@ export function OperacionDetailClient({ ventaId }: { ventaId: string }) {
   ) : undefined
 
   return (
-    <div className="space-y-4 max-w-3xl">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => router.push("/operaciones")}
-          className="rounded-[10px] h-8 gap-1.5"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          Volver
-        </Button>
-        <div className="flex-1">
-          <h1 className="text-xl font-bold text-foreground font-mono">
-            {auto?.dominio ?? "—"}
-            <span className="font-sans font-normal text-muted-foreground text-base ml-2">
-              {auto ? `${auto.marca} ${auto.modelo}${auto.anio ? ` (${auto.anio})` : ""}` : ""}
-            </span>
-          </h1>
-          <div className="flex items-center gap-2 mt-1">
-            <EstadoOperacionChip estado={venta.estado_operacion} />
-            {auto?.estado && <EstadoChip estado={auto.estado} />}
-            {!canEdit && (
-              <span className="text-xs text-muted-foreground">Solo lectura</span>
-            )}
+    <div className={cn("space-y-4", !embedded && "max-w-3xl")}>
+      {/* Header (solo en la página de detalle; en el acordeón la tarjeta ya lo muestra) */}
+      {!embedded && (
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push("/operaciones")}
+            className="rounded-[10px] h-8 gap-1.5"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Volver
+          </Button>
+          <div className="flex-1">
+            <h1 className="text-xl font-bold text-foreground font-mono">
+              {auto?.dominio ?? "—"}
+              <span className="font-sans font-normal text-muted-foreground text-base ml-2">
+                {auto ? `${auto.marca} ${auto.modelo}${auto.anio ? ` (${auto.anio})` : ""}` : ""}
+              </span>
+            </h1>
+            <div className="flex items-center gap-2 mt-1">
+              <EstadoOperacionChip estado={venta.estado_operacion} />
+              {auto?.estado && <EstadoChip estado={auto.estado} />}
+              {!canEdit && (
+                <span className="text-xs text-muted-foreground">Solo lectura</span>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* ── Datos de la operación (solo lectura) ─────── */}
       <SectionCard title="Datos de la operación">

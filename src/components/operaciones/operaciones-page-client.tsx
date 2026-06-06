@@ -1,13 +1,12 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { useRouter } from "next/navigation"
 import { ChevronLeft, ChevronRight, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/auth-context"
 import { fetchVentas, fetchTareas, completarTarea, normalizeVenta, PAGE_SIZE } from "@/lib/ventas"
 import { OperacionesFilters } from "./operaciones-filters"
-import { OperacionesTable } from "./operaciones-table"
+import { OperacionesCards } from "./operaciones-cards"
 import type { Venta, Tarea, VentaFilters } from "@/types/ventas"
 
 // Por defecto la lista muestra solo las ventas en curso (señado + en proceso);
@@ -18,7 +17,6 @@ const ROLES_TAREAS = ["administracion", "direccion"]
 
 export function OperacionesPageClient() {
   const { usuario } = useAuth()
-  const router = useRouter()
 
   const [ventas, setVentas] = useState<Venta[]>([])
   const [total, setTotal] = useState(0)
@@ -43,8 +41,9 @@ export function OperacionesPageClient() {
 
   const activeFilters = { ...filters, search: debouncedSearch }
 
-  const loadVentas = useCallback(async () => {
-    setLoading(true)
+  // silent: refresca progreso/badges sin desmontar las tarjetas (tras guardar en el acordeón)
+  const loadVentas = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoading(true)
     setPageError(null)
     const result = await fetchVentas(activeFilters, page)
     setLoading(false)
@@ -168,11 +167,11 @@ export function OperacionesPageClient() {
         </div>
       )}
 
-      {/* Table */}
-      <OperacionesTable
+      {/* Tarjetas desplegables (acordeón): el detalle se abre in-place */}
+      <OperacionesCards
         ventas={ventas}
         loading={loading}
-        onView={(v: Venta) => router.push(`/operaciones/${v.id}`)}
+        onSaved={() => loadVentas({ silent: true })}
       />
 
       {/* Pagination */}

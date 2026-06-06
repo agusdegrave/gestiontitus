@@ -190,11 +190,55 @@ export interface Venta {
     marca: string
     modelo: string
   } | null
+  // Embed de la tabla financiacion (solo en la lista, para el progreso global)
+  financiacion?: Financiacion | null
 }
 
 export function checklistProgress(v: Venta): { done: number; total: number } {
   const done = CHECKLIST_ENTREGA.filter((c) => v[c.field]).length
   return { done, total: CHECKLIST_ENTREGA.length }
+}
+
+// Valores viejos del selector de alta ("Bancor", "Galicia"...) → opción agrupada actual
+export function normalizeBanco(f: string | null | undefined): "" | BancoFinanciacion {
+  if (!f) return ""
+  if ((BANCOS_FINANCIACION as readonly string[]).includes(f)) return f as BancoFinanciacion
+  if (f === "Bancor" || f === "Nación") return "Bancor / Nación"
+  if (f === "Santander" || f === "Galicia") return "Santander / Galicia"
+  if (f === "Carfácil") return "Carfácil / Finanzas"
+  return "Otra"
+}
+
+// Pasos del banco que cuentan para el progreso global (la fecha de turno NO cuenta)
+export function pasosBanco(banco: BancoFinanciacion): FinanciacionBoolField[] {
+  return FINANCIACION_CHECKLIST[banco].flatMap((it) =>
+    it.kind === "check" ? [it.field] : it.kind === "docs" ? it.items.map((d) => d.field) : []
+  )
+}
+
+// Progreso global de la operación: 7 hitos de entrega + pasos del banco si es financiada
+export function operacionProgress(v: Venta): { done: number; total: number; pct: number } {
+  let { done, total } = checklistProgress(v)
+  const banco = normalizeBanco(v.financiera)
+  if ((v.paga_financiado ?? 0) > 0 && banco) {
+    const pasos = pasosBanco(banco)
+    total += pasos.length
+    done += pasos.filter((f) => v.financiacion?.[f] === true).length
+  }
+  return { done, total, pct: Math.round((done / total) * 100) }
+}
+
+// Suma de todas las deudas a sumar de la operación (null = 0)
+export function totalDeudasVenta(v: Venta): number {
+  return [
+    v.deuda_muni,
+    v.deuda_rentas,
+    v.deuda_multas,
+    v.gastos_consigna,
+    v.deuda_permuta_muni,
+    v.deuda_permuta_rentas,
+    v.deuda_permuta_multas,
+  ].reduce<number>((acc, d) => acc + (d ?? 0), 0)
 }
 
 export interface Tarea {
