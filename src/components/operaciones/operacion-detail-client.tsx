@@ -15,13 +15,20 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useAuth } from "@/contexts/auth-context"
-import { fetchVentaById, fetchSeguimientoAuto, updateVenta } from "@/lib/ventas"
+import { fetchVentaById, fetchSeguimientoAuto, fetchFinanciacion, updateVenta, upsertFinanciacion } from "@/lib/ventas"
 import { formatPriceARS, formatDateAR, parsePrice, cn } from "@/lib/utils"
 import { EstadoChip } from "@/components/stock/chips"
 import { VerifChip, InformeEstadoChip } from "@/components/consignacion/consignacion-chips"
 import { EstadoOperacionChip, PagoChip } from "./operacion-chips"
-import { CHECKLIST_ENTREGA } from "@/types/ventas"
-import type { Venta, EstadoOperacion, ChecklistField } from "@/types/ventas"
+import { CHECKLIST_ENTREGA, BANCOS_FINANCIACION, FINANCIACION_CHECKLIST } from "@/types/ventas"
+import type {
+  Venta,
+  EstadoOperacion,
+  ChecklistField,
+  Financiacion,
+  BancoFinanciacion,
+  FinanciacionBoolField,
+} from "@/types/ventas"
 import type { Verificacion, Informe } from "@/types/consignacion"
 
 const ROLES_EDITAN = ["administracion", "direccion"]
@@ -44,6 +51,32 @@ type DeudaField =
   | (typeof DEUDAS_PERMUTA)[number]["field"]
   | "gastos_consigna"
 
+// Todos los campos boolean de la tabla financiacion (derivados del checklist por banco)
+const FIN_BOOL_FIELDS: FinanciacionBoolField[] = Object.values(FINANCIACION_CHECKLIST).flatMap(
+  (items) =>
+    items.flatMap((it) =>
+      it.kind === "check" ? [it.field] : it.kind === "docs" ? it.items.map((d) => d.field) : []
+    )
+)
+
+// Valores viejos del selector de alta ("Bancor", "Galicia"...) → opción agrupada actual
+function normalizeBanco(f: string | null): "" | BancoFinanciacion {
+  if (!f) return ""
+  if ((BANCOS_FINANCIACION as readonly string[]).includes(f)) return f as BancoFinanciacion
+  if (f === "Bancor" || f === "Nación") return "Bancor / Nación"
+  if (f === "Santander" || f === "Galicia") return "Santander / Galicia"
+  if (f === "Carfácil") return "Carfácil / Finanzas"
+  return "Otra"
+}
+
+interface FinanciacionForm {
+  financiera: "" | BancoFinanciacion
+  cantidad_cuotas: string
+  costo_prenda: string
+  sg_turno: string
+  checks: Record<FinanciacionBoolField, boolean>
+}
+
 interface SeguimientoForm {
   estado_operacion: EstadoOperacion
   fecha_tentativa_entrega: string
@@ -53,9 +86,10 @@ interface SeguimientoForm {
   aclaraciones: string
   checklist: Record<ChecklistField, boolean>
   deudas: Record<DeudaField, string>
+  financiacion: FinanciacionForm
 }
 
-function buildForm(v: Venta): SeguimientoForm {
+function buildForm(v: Venta, fin: Financiacion | null): SeguimientoForm {
   return {
     estado_operacion: v.estado_operacion,
     fecha_tentativa_entrega: v.fecha_tentativa_entrega ?? "",
@@ -74,6 +108,15 @@ function buildForm(v: Venta): SeguimientoForm {
       deuda_permuta_muni: v.deuda_permuta_muni?.toString() ?? "",
       deuda_permuta_rentas: v.deuda_permuta_rentas?.toString() ?? "",
       deuda_permuta_multas: v.deuda_permuta_multas?.toString() ?? "",
+    },
+    financiacion: {
+      financiera: normalizeBanco(v.financiera),
+      cantidad_cuotas: v.cantidad_cuotas?.toString() ?? "",
+      costo_prenda: v.costo_prenda?.toString() ?? "",
+      sg_turno: fin?.sg_turno ?? "",
+      checks: Object.fromEntries(
+        FIN_BOOL_FIELDS.map((f) => [f, fin?.[f] === true])
+      ) as Record<FinanciacionBoolField, boolean>,
     },
   }
 }
@@ -118,6 +161,38 @@ function DeudaInput({ label, value, onChange, disabled }: {
   )
 }
 
+function CheckToggle({ label, checked, onToggle, disabled }: {
+  label: string
+  checked: boolean
+  onToggle: () => void
+  disabled: boolean
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      disabled={disabled}
+      className={cn(
+        "flex items-center gap-2.5 rounded-[10px] border px-3 py-2.5 text-sm text-left transition-colors",
+        checked
+          ? "border-green-200 bg-green-50 text-green-800"
+          : "border-border bg-background text-foreground",
+        !disabled ? "cursor-pointer hover:bg-muted/40" : "cursor-default opacity-80"
+      )}
+    >
+      <span
+        className={cn(
+          "flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-[6px] border",
+          checked ? "border-green-500 bg-green-500 text-white" : "border-stone-300 bg-white"
+        )}
+      >
+        {checked && <Check className="w-3 h-3" />}
+      </span>
+      {label}
+    </button>
+  )
+}
+
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-4 text-sm">
@@ -151,8 +226,12 @@ export function OperacionDetailClient({ ventaId }: { ventaId: string }) {
       return
     }
     setVenta(data)
-    setForm(buildForm(data))
-    const seg = await fetchSeguimientoAuto(data.auto_id)
+    const [seg, fin] = await Promise.all([
+      fetchSeguimientoAuto(data.auto_id),
+      // Solo hay financiación si la venta tiene parte financiada
+      (data.paga_financiado ?? 0) > 0 ? fetchFinanciacion(data.id) : Promise.resolve(null),
+    ])
+    setForm(buildForm(data, fin))
     setVerificacion(seg.verificacion)
     setInformes(seg.informes)
     setLoading(false)
@@ -204,6 +283,19 @@ export function OperacionDetailClient({ ventaId }: { ventaId: string }) {
     : 0
   const totalDeudas = subtotalVendido + subtotalPermuta
 
+  // Financiación: checklist del banco elegido y mini-progreso (fecha cuenta como paso)
+  const banco = form.financiacion.financiera
+  const bancoItems = banco ? FINANCIACION_CHECKLIST[banco] : []
+  const finDone = bancoItems.reduce((acc, it) => {
+    if (it.kind === "check") return acc + (form.financiacion.checks[it.field] ? 1 : 0)
+    if (it.kind === "docs") return acc + it.items.filter((d) => form.financiacion.checks[d.field]).length
+    return acc + (form.financiacion.sg_turno ? 1 : 0)
+  }, 0)
+  const finTotal = bancoItems.reduce(
+    (acc, it) => acc + (it.kind === "docs" ? it.items.length : 1),
+    0
+  )
+
   function setField<K extends keyof SeguimientoForm>(field: K, value: SeguimientoForm[K]) {
     setForm((p) => (p ? { ...p, [field]: value } : p))
   }
@@ -219,11 +311,31 @@ export function OperacionDetailClient({ ventaId }: { ventaId: string }) {
     setForm((p) => (p ? { ...p, deudas: { ...p.deudas, [field]: value } } : p))
   }
 
+  function setFin<K extends keyof FinanciacionForm>(field: K, value: FinanciacionForm[K]) {
+    setForm((p) => (p ? { ...p, financiacion: { ...p.financiacion, [field]: value } } : p))
+  }
+
+  function toggleFinCheck(field: FinanciacionBoolField) {
+    if (!canEdit) return
+    setForm((p) =>
+      p
+        ? {
+            ...p,
+            financiacion: {
+              ...p.financiacion,
+              checks: { ...p.financiacion.checks, [field]: !p.financiacion.checks[field] },
+            },
+          }
+        : p
+    )
+  }
+
   async function handleSave() {
     if (!form) return
     setSaving(true)
     setSaved(false)
     setSaveError(null)
+    const tieneFinanciado = (venta?.paga_financiado ?? 0) > 0
     // No mandar agencia_id ni auditoría: los completa la base.
     const { error } = await updateVenta(ventaId, {
       estado_operacion: form.estado_operacion,
@@ -237,11 +349,35 @@ export function OperacionDetailClient({ ventaId }: { ventaId: string }) {
       ...Object.fromEntries(
         Object.entries(form.deudas).map(([k, v]) => [k, v.trim() ? parsePrice(v) : null])
       ),
+      // Financiación (datos que viven en ventas)
+      ...(tieneFinanciado
+        ? {
+            financiera: form.financiacion.financiera || null,
+            cantidad_cuotas: form.financiacion.cantidad_cuotas
+              ? parseInt(form.financiacion.cantidad_cuotas)
+              : null,
+            costo_prenda: form.financiacion.costo_prenda.trim()
+              ? parsePrice(form.financiacion.costo_prenda)
+              : null,
+          }
+        : {}),
     })
     if (error) {
       setSaving(false)
       setSaveError(error.message)
       return
+    }
+    // Checklist del banco: 1 fila por venta en financiacion (upsert por venta_id)
+    if (tieneFinanciado) {
+      const { error: finError } = await upsertFinanciacion(ventaId, {
+        ...form.financiacion.checks,
+        sg_turno: form.financiacion.sg_turno || null,
+      })
+      if (finError) {
+        setSaving(false)
+        setSaveError(finError.message)
+        return
+      }
     }
     // Al pasar a 'entregado' un trigger marca el auto como 'vendido': refrescar para reflejarlo
     await load()
@@ -510,6 +646,128 @@ export function OperacionDetailClient({ ventaId }: { ventaId: string }) {
         </div>
       </SectionCard>
 
+      {/* ── Financiación (editable, solo si hay parte financiada) ── */}
+      {haFinanciado && (
+        <SectionCard title="Financiación">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="space-y-1.5">
+              <Label>Financiera / Banco</Label>
+              <Select
+                value={form.financiacion.financiera}
+                onValueChange={(v) => setFin("financiera", (v ?? "") as "" | BancoFinanciacion)}
+                disabled={!canEdit}
+              >
+                <SelectTrigger className="rounded-[10px]">
+                  <SelectValue placeholder="Seleccioná..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {BANCOS_FINANCIACION.map((b) => (
+                    <SelectItem key={b} value={b}>{b}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Cantidad de cuotas</Label>
+              <Input
+                type="number"
+                min={1}
+                value={form.financiacion.cantidad_cuotas}
+                onChange={(e) => setFin("cantidad_cuotas", e.target.value)}
+                disabled={!canEdit}
+                placeholder="12"
+                className="rounded-[10px]"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Costo de prenda</Label>
+              <Input
+                value={form.financiacion.costo_prenda}
+                onChange={(e) => setFin("costo_prenda", e.target.value)}
+                disabled={!canEdit}
+                placeholder="$ 0"
+                className="rounded-[10px]"
+              />
+              {form.financiacion.costo_prenda.trim() && (
+                <p className="text-xs text-muted-foreground">
+                  {formatPriceARS(parsePrice(form.financiacion.costo_prenda))}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Checklist del banco elegido (Otra no tiene) */}
+          {banco && finTotal > 0 && (
+            <div className="space-y-3 pt-1">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium text-foreground">
+                    {finDone} / {finTotal} pasos
+                  </p>
+                  <span className="text-xs text-muted-foreground tabular-nums">
+                    {Math.round((finDone / finTotal) * 100)}%
+                  </span>
+                </div>
+                <div className="h-2 rounded-full bg-stone-100 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-green-500 transition-all"
+                    style={{ width: `${(finDone / finTotal) * 100}%` }}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {bancoItems.map((item) => {
+                  if (item.kind === "check") {
+                    return (
+                      <CheckToggle
+                        key={item.field}
+                        label={item.label}
+                        checked={form.financiacion.checks[item.field]}
+                        onToggle={() => toggleFinCheck(item.field)}
+                        disabled={!canEdit}
+                      />
+                    )
+                  }
+                  if (item.kind === "docs") {
+                    return (
+                      <div key={item.label} className="sm:col-span-2 space-y-2 pt-1">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                          {item.label}
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {item.items.map((d) => (
+                            <CheckToggle
+                              key={d.field}
+                              label={d.label}
+                              checked={form.financiacion.checks[d.field]}
+                              onToggle={() => toggleFinCheck(d.field)}
+                              disabled={!canEdit}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  }
+                  return (
+                    <div key={item.field} className="sm:col-span-2 space-y-1.5 pt-1">
+                      <Label>{item.label}</Label>
+                      <Input
+                        type="date"
+                        value={form.financiacion.sg_turno}
+                        onChange={(e) => setFin("sg_turno", e.target.value)}
+                        disabled={!canEdit}
+                        className="rounded-[10px] sm:max-w-[260px]"
+                      />
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+        </SectionCard>
+      )}
+
       {/* ── Checklist de entrega (editable) ──────────── */}
       <SectionCard title="Checklist de entrega" footer={saveControls}>
         <div className="space-y-1.5">
@@ -530,34 +788,15 @@ export function OperacionDetailClient({ ventaId }: { ventaId: string }) {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {CHECKLIST_ENTREGA.map((item) => {
-            const checked = form.checklist[item.field]
-            return (
-              <button
-                key={item.field}
-                type="button"
-                onClick={() => toggleChecklist(item.field)}
-                disabled={!canEdit}
-                className={cn(
-                  "flex items-center gap-2.5 rounded-[10px] border px-3 py-2.5 text-sm text-left transition-colors",
-                  checked
-                    ? "border-green-200 bg-green-50 text-green-800"
-                    : "border-border bg-background text-foreground",
-                  canEdit ? "cursor-pointer hover:bg-muted/40" : "cursor-default opacity-80"
-                )}
-              >
-                <span
-                  className={cn(
-                    "flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-[6px] border",
-                    checked ? "border-green-500 bg-green-500 text-white" : "border-stone-300 bg-white"
-                  )}
-                >
-                  {checked && <Check className="w-3 h-3" />}
-                </span>
-                {item.label}
-              </button>
-            )
-          })}
+          {CHECKLIST_ENTREGA.map((item) => (
+            <CheckToggle
+              key={item.field}
+              label={item.label}
+              checked={form.checklist[item.field]}
+              onToggle={() => toggleChecklist(item.field)}
+              disabled={!canEdit}
+            />
+          ))}
         </div>
       </SectionCard>
 

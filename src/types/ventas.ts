@@ -16,6 +16,106 @@ export const FINANCIERAS = [
   "Otra",
 ] as const
 
+// Opciones del selector Financiera / Banco en la ficha de operación
+// (ventas.financiera). Cada una tiene su checklist en la tabla financiacion.
+export const BANCOS_FINANCIACION = [
+  "Bancor / Nación",
+  "Santander / Galicia",
+  "MG",
+  "Carfácil / Finanzas",
+  "Otra",
+] as const
+
+export type BancoFinanciacion = (typeof BANCOS_FINANCIACION)[number]
+
+// Tabla financiacion: 1 fila por venta (upsert por venta_id)
+export interface Financiacion {
+  id: string
+  venta_id: string
+  // Bancor / Nación
+  bn_cargado: boolean
+  bn_firmado_tarjeta: boolean
+  bn_liquidado: boolean
+  // Santander / Galicia
+  sg_validacion: boolean
+  sg_doc_inf_dom: boolean
+  sg_doc_veri: boolean
+  sg_doc_titulo: boolean
+  sg_doc_08: boolean
+  sg_doc_cedula: boolean
+  sg_turno: string | null
+  // MG
+  mg_validacion: boolean
+  mg_doc_foto_auto: boolean
+  mg_doc_informe: boolean
+  mg_doc_dni: boolean
+  mg_doc_veri: boolean
+  mg_doc_tarj_tit: boolean
+  mg_pedir_seguro: boolean
+  mg_coord_juanma: boolean
+  mg_seguro_vendedor: boolean
+  // Carfácil / Finanzas
+  cf_cargado: boolean
+  cf_prenda_fisica: boolean
+  cf_firmado: boolean
+  cf_enviar_legajo: boolean
+}
+
+export type FinanciacionBoolField = Exclude<keyof Financiacion, "id" | "venta_id" | "sg_turno">
+
+// Checklist por banco: checks simples, sub-lista de documentación o campo de fecha
+export type FinanciacionItem =
+  | { kind: "check"; field: FinanciacionBoolField; label: string }
+  | { kind: "docs"; label: string; items: { field: FinanciacionBoolField; label: string }[] }
+  | { kind: "fecha"; field: "sg_turno"; label: string }
+
+export const FINANCIACION_CHECKLIST: Record<BancoFinanciacion, FinanciacionItem[]> = {
+  "Bancor / Nación": [
+    { kind: "check", field: "bn_cargado", label: "Cargado" },
+    { kind: "check", field: "bn_firmado_tarjeta", label: "Firmado / Crear tarjeta" },
+    { kind: "check", field: "bn_liquidado", label: "Liquidado" },
+  ],
+  "Santander / Galicia": [
+    { kind: "check", field: "sg_validacion", label: "Validación" },
+    {
+      kind: "docs",
+      label: "Documentación",
+      items: [
+        { field: "sg_doc_inf_dom", label: "Informe de dominio" },
+        { field: "sg_doc_veri", label: "Verificación" },
+        { field: "sg_doc_titulo", label: "Título" },
+        { field: "sg_doc_08", label: "08" },
+        { field: "sg_doc_cedula", label: "Cédula" },
+      ],
+    },
+    { kind: "fecha", field: "sg_turno", label: "Turno" },
+  ],
+  MG: [
+    { kind: "check", field: "mg_validacion", label: "Validación" },
+    {
+      kind: "docs",
+      label: "Documentación",
+      items: [
+        { field: "mg_doc_foto_auto", label: "Foto del auto" },
+        { field: "mg_doc_informe", label: "Informe" },
+        { field: "mg_doc_dni", label: "DNI" },
+        { field: "mg_doc_veri", label: "Verificación" },
+        { field: "mg_doc_tarj_tit", label: "Tarjeta / Título" },
+      ],
+    },
+    { kind: "check", field: "mg_pedir_seguro", label: "Pedir seguro" },
+    { kind: "check", field: "mg_coord_juanma", label: "Coordinar con Juanma" },
+    { kind: "check", field: "mg_seguro_vendedor", label: "Seguro vendedor" },
+  ],
+  "Carfácil / Finanzas": [
+    { kind: "check", field: "cf_cargado", label: "Cargado" },
+    { kind: "check", field: "cf_prenda_fisica", label: "Prenda física en posesión" },
+    { kind: "check", field: "cf_firmado", label: "Firmado" },
+    { kind: "check", field: "cf_enviar_legajo", label: "Enviar legajo" },
+  ],
+  Otra: [],
+}
+
 // Checklist de hitos de entrega: campo en ventas → etiqueta en UI
 export const CHECKLIST_ENTREGA = [
   { field: "entrega_planilla_ok", label: "Planilla de ventas" },

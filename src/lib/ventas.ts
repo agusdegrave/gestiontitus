@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client"
-import type { Venta, VentaFilters, Tarea } from "@/types/ventas"
+import type { Venta, VentaFilters, Tarea, Financiacion } from "@/types/ventas"
 import type { Verificacion, Informe } from "@/types/consignacion"
 
 export const PAGE_SIZE = 30
@@ -87,6 +87,26 @@ export async function fetchSeguimientoAuto(autoId: string): Promise<{
     verificacion: (verifRes.data as Verificacion | null) ?? null,
     informes: (infRes.data as Informe[] | null) ?? [],
   }
+}
+
+// Financiación de la venta (1 fila por venta; puede no existir todavía)
+export async function fetchFinanciacion(ventaId: string): Promise<Financiacion | null> {
+  const supabase = createClient()
+  const { data } = await supabase
+    .from("financiacion")
+    .select("*")
+    .eq("venta_id", ventaId)
+    .maybeSingle()
+  return (data as Financiacion | null) ?? null
+}
+
+// UPSERT por venta_id: insert si no existe, update si existe.
+// NO mandar agencia_id ni auditoría (los completa la base).
+export async function upsertFinanciacion(ventaId: string, payload: Record<string, unknown>) {
+  const supabase = createClient()
+  return supabase
+    .from("financiacion")
+    .upsert({ venta_id: ventaId, ...payload }, { onConflict: "venta_id" })
 }
 
 // UPDATE de seguimiento: NO mandar agencia_id ni auditoría (los completa la base).
