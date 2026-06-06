@@ -32,6 +32,9 @@ interface Props {
   tramite: Tramite | null // null = nuevo
   gestores: Gestor[] // solo activos
   canEdit: boolean
+  // Vista del rol gestor: sin selector de gestor (es él mismo) y sin
+  // deudas/ganancias (contabilidad interna de la agencia)
+  modoGestor?: boolean
 }
 
 interface FormState {
@@ -121,7 +124,7 @@ function GananciaRow({ label, value, estimada }: { label: string; value: number;
   )
 }
 
-export function TramiteForm({ open, onClose, onSaved, tramite, gestores, canEdit }: Props) {
+export function TramiteForm({ open, onClose, onSaved, tramite, gestores, canEdit, modoGestor = false }: Props) {
   const [form, setForm] = useState<FormState>(() => buildForm(tramite))
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -221,26 +224,28 @@ export function TramiteForm({ open, onClose, onSaved, tramite, gestores, canEdit
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="space-y-1.5">
-                <Label>Gestor</Label>
-                <Select
-                  value={form.gestor_id}
-                  onValueChange={(v) => set("gestor_id")(v ?? "")}
-                  disabled={disabled}
-                >
-                  <SelectTrigger className="rounded-[10px]">
-                    <SelectValue placeholder="Seleccioná..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {gestores.map((g) => (
-                      <SelectItem key={g.id} value={g.id}>
-                        {g.nombre}{g.alias ? ` (${g.alias})` : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className={cn("grid grid-cols-1 gap-3", modoGestor ? "sm:grid-cols-2" : "sm:grid-cols-3")}>
+              {!modoGestor && (
+                <div className="space-y-1.5">
+                  <Label>Gestor</Label>
+                  <Select
+                    value={form.gestor_id}
+                    onValueChange={(v) => set("gestor_id")(v ?? "")}
+                    disabled={disabled}
+                  >
+                    <SelectTrigger className="rounded-[10px]">
+                      <SelectValue placeholder="Seleccioná..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {gestores.map((g) => (
+                        <SelectItem key={g.id} value={g.id}>
+                          {g.nombre}{g.alias ? ` (${g.alias})` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="space-y-1.5">
                 <Label>Estado</Label>
                 <Select
@@ -331,7 +336,8 @@ export function TramiteForm({ open, onClose, onSaved, tramite, gestores, canEdit
             )}
           </div>
 
-          {/* ── Ganancia por deudas ────────────────── */}
+          {/* ── Ganancia por deudas (no se muestra al gestor) ── */}
+          {!modoGestor && (
           <div className="space-y-3 pt-1">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Deudas (si aplica)
@@ -351,8 +357,10 @@ export function TramiteForm({ open, onClose, onSaved, tramite, gestores, canEdit
               />
             </div>
           </div>
+          )}
 
-          {/* ── Ganancias (preview en vivo; las guarda la base) ── */}
+          {/* ── Ganancias (preview en vivo; las guarda la base; no para el gestor) ── */}
+          {!modoGestor && (
           <div className="rounded-[10px] bg-stone-50 border border-border px-4 py-3 space-y-1.5">
             <GananciaRow
               label="Ganancia transferencia"
@@ -372,6 +380,7 @@ export function TramiteForm({ open, onClose, onSaved, tramite, gestores, canEdit
               </span>
             </div>
           </div>
+          )}
 
           {error && (
             <p className="flex items-center gap-1.5 text-xs text-destructive">

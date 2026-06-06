@@ -5,6 +5,7 @@ export type Rol =
   | "administracion"
   | "alistaje"
   | "direccion"
+  | "gestor"
 
 export interface Usuario {
   id: string
@@ -13,6 +14,8 @@ export interface Usuario {
   apellido: string
   rol: Rol
   agencia_id: string
+  // Solo para rol 'gestor': lo ata a su fila en gestores
+  gestor_id: string | null
 }
 
 export interface Agencia {

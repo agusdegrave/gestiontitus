@@ -15,6 +15,7 @@ import {
   PanelLeftOpen,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/contexts/auth-context"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface NavItem {
@@ -36,7 +37,14 @@ const NAV_ITEMS: NavItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const { usuario } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
+
+  // El rol gestor solo ve Gestoría (su vista restringida)
+  const navItems =
+    usuario?.rol === "gestor"
+      ? NAV_ITEMS.filter((item) => item.label === "Gestoría")
+      : NAV_ITEMS
 
   return (
     <aside
@@ -81,7 +89,7 @@ export function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto overflow-x-hidden">
-        {NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const isCurrentPage = item.href ? pathname.startsWith(item.href) : false
 
           if (!item.active) {

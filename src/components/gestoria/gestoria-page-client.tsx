@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { CalculadoraTab } from "./calculadora-tab"
 import { GestoresTab } from "./gestores-tab"
 import { TramitesTab } from "./tramites-tab"
+import { MiCajaTab } from "./mi-caja-tab"
 
 // Más adelante se suman las "Cajas"
 const TABS = [
@@ -14,7 +15,13 @@ const TABS = [
   { id: "gestores", label: "Gestores" },
 ] as const
 
-type TabId = (typeof TABS)[number]["id"]
+// Vista restringida del rol gestor: solo sus trámites y su caja
+const TABS_GESTOR = [
+  { id: "tramites", label: "Mis trámites" },
+  { id: "micaja", label: "Mi caja" },
+] as const
+
+type TabId = (typeof TABS)[number]["id"] | (typeof TABS_GESTOR)[number]["id"]
 
 export function GestoriaPageClient() {
   const { usuario } = useAuth()
@@ -22,19 +29,24 @@ export function GestoriaPageClient() {
 
   if (!usuario) return null
 
+  const esGestor = usuario.rol === "gestor"
+  const tabs = esGestor ? TABS_GESTOR : TABS
+
   return (
     <div className="space-y-5">
       {/* Header */}
       <div>
         <h1 className="text-xl font-bold text-foreground">Gestoría</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Trámites, calculadora de transferencias y gestores
+          {esGestor
+            ? "Tus trámites y tu caja"
+            : "Trámites, calculadora de transferencias y gestores"}
         </p>
       </div>
 
       {/* Pestañas */}
       <div className="flex items-center gap-1 border-b border-border">
-        {TABS.map((t) => (
+        {tabs.map((t) => (
           <button
             key={t.id}
             type="button"
@@ -51,9 +63,10 @@ export function GestoriaPageClient() {
         ))}
       </div>
 
-      {tab === "tramites" && <TramitesTab />}
-      {tab === "calculadora" && <CalculadoraTab />}
-      {tab === "gestores" && <GestoresTab />}
+      {tab === "tramites" && <TramitesTab modoGestor={esGestor} />}
+      {esGestor && tab === "micaja" && <MiCajaTab />}
+      {!esGestor && tab === "calculadora" && <CalculadoraTab />}
+      {!esGestor && tab === "gestores" && <GestoresTab />}
     </div>
   )
 }

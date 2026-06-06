@@ -27,7 +27,7 @@ import {
   deleteTramite,
   TRAMITES_PAGE_SIZE,
 } from "@/lib/gestoria"
-import { formatPriceARS, cn } from "@/lib/utils"
+import { formatPriceARS, formatDateAR, cn } from "@/lib/utils"
 import { ESTADO_TRAMITE_LABELS } from "@/types/gestoria"
 import { TramiteForm } from "./tramite-form"
 import type { Tramite, TramiteFilters, Gestor, EstadoTramite } from "@/types/gestoria"
@@ -86,7 +86,10 @@ function ResumenCard({ label, value }: { label: string; value: number }) {
   )
 }
 
-export function TramitesTab() {
+// modoGestor: vista restringida del rol gestor ("Mis trámites"): sin resumen de
+// ganancias, sin filtro/columna de gestor, sin crear; SÍ puede editar los suyos
+// (la RLS ya limita qué filas ve y toca).
+export function TramitesTab({ modoGestor = false }: { modoGestor?: boolean }) {
   const { usuario } = useAuth()
 
   const [tramites, setTramites] = useState<Tramite[]>([])
@@ -107,7 +110,9 @@ export function TramitesTab() {
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
-  const canEdit = usuario ? ROLES_EDITAN.includes(usuario.rol) : false
+  // El gestor edita sus propios trámites (estado, costo real); crear/borrar no.
+  const canEdit = usuario ? ROLES_EDITAN.includes(usuario.rol) || modoGestor : false
+  const canCreate = usuario ? ROLES_EDITAN.includes(usuario.rol) : false
   const canDelete = usuario?.rol === "direccion"
 
   // Debounce search
@@ -121,9 +126,10 @@ export function TramitesTab() {
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     if (!opts?.silent) setLoading(true)
     setLoadError(null)
+    // En modo gestor no se muestran ganancias: no hace falta traer los totales
     const [result, sums] = await Promise.all([
       fetchTramites(activeFilters, page),
-      fetchTramitesTotales(activeFilters),
+      modoGestor ? Promise.resolve({ transferencia: 0, deudas: 0 }) : fetchTramitesTotales(activeFilters),
     ])
     setLoading(false)
     if (result.error) {
@@ -133,14 +139,15 @@ export function TramitesTab() {
     setTramites((result.data as unknown as Tramite[]) ?? [])
     setTotal(result.count ?? 0)
     setTotales(sums)
-  }, [debouncedSearch, filters.gestor_id, filters.estado, page]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [debouncedSearch, filters.gestor_id, filters.estado, page, modoGestor]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { load() }, [load])
   useEffect(() => { setPage(0) }, [filters.gestor_id, filters.estado, debouncedSearch])
 
   useEffect(() => {
-    fetchGestores().then(({ data }) => setGestores(data))
-  }, [])
+    // El gestor no elige gestor: ni filtro ni selector en el form
+    if (!modoGestor) fetchGestores().then(({ data }) => setGestores(data))
+  }, [modoGestor])
 
   async function handleDelete() {
     if (!deleting) return
@@ -161,12 +168,14 @@ export function TramitesTab() {
 
   return (
     <div className="space-y-4">
-      {/* Resumen del filtro actual */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <ResumenCard label="Ganancia transferencia" value={totales.transferencia} />
-        <ResumenCard label="Ganancia por deudas" value={totales.deudas} />
-        <ResumenCard label="Ganancia total" value={totales.transferencia + totales.deudas} />
-      </div>
+      {/* Resumen del filtro actual (las ganancias no se muestran al gestor) */}
+      {!modoGestor && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <ResumenCard label="Ganancia transferencia" value={totales.transferencia} />
+          <ResumenCard label="Ganancia por deudas" value={totales.deudas} />
+          <ResumenCard label="Ganancia total" value={totales.transferencia + totales.deudas} />
+        </div>
+      )}
 
       {/* Filtros + nuevo */}
       <div className="flex flex-wrap items-center gap-3">
@@ -179,20 +188,22 @@ export function TramitesTab() {
             className="pl-8 rounded-[10px]"
           />
         </div>
-        <Select
-          value={filters.gestor_id || "all"}
-          onValueChange={(v) => setFilters((p) => ({ ...p, gestor_id: v === "all" ? "" : (v ?? "") }))}
-        >
-          <SelectTrigger className="rounded-[10px] w-[170px]">
-            <SelectValue placeholder="Gestor" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos los gestores</SelectItem>
-            {gestores.map((g) => (
-              <SelectItem key={g.id} value={g.id}>{g.nombre}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {!modoGestor && (
+          <Select
+            value={filters.gestor_id || "all"}
+            onValueChange={(v) => setFilters((p) => ({ ...p, gestor_id: v === "all" ? "" : (v ?? "") }))}
+          >
+            <SelectTrigger className="rounded-[10px] w-[170px]">
+              <SelectValue placeholder="Gestor" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los gestores</SelectItem>
+              {gestores.map((g) => (
+                <SelectItem key={g.id} value={g.id}>{g.nombre}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         <Select
           value={filters.estado || "all"}
           onValueChange={(v) => setFilters((p) => ({ ...p, estado: v === "all" ? "" : (v ?? "") }))}
@@ -211,7 +222,7 @@ export function TramitesTab() {
           {loading ? "..." : `${total} trámite${total === 1 ? "" : "s"}`}
         </span>
         <div className="flex-1" />
-        {canEdit && (
+        {canCreate && (
           <Button
             onClick={() => { setSelected(null); setFormOpen(true) }}
             className="rounded-[10px] bg-brand-500 hover:bg-brand-600 text-white gap-1.5"
@@ -247,13 +258,22 @@ export function TramitesTab() {
               <tr className="border-b border-border bg-muted/40">
                 <Th>Dominio</Th>
                 <Th>Vehículo</Th>
-                <Th>Gestor</Th>
+                {!modoGestor && <Th>Gestor</Th>}
                 <Th>Estado</Th>
                 <Th className="text-right">Cobrado</Th>
                 <Th className="text-right">Costo</Th>
-                <Th className="text-right">G. transferencia</Th>
-                <Th className="text-right">G. deudas</Th>
-                <Th className="text-right">G. total</Th>
+                {modoGestor ? (
+                  <>
+                    <Th>Fecha inicio</Th>
+                    <Th>Fecha papeles</Th>
+                  </>
+                ) : (
+                  <>
+                    <Th className="text-right">G. transferencia</Th>
+                    <Th className="text-right">G. deudas</Th>
+                    <Th className="text-right">G. total</Th>
+                  </>
+                )}
                 {canDelete && <Th className="w-10" />}
               </tr>
             </thead>
@@ -278,11 +298,13 @@ export function TramitesTab() {
                       {t.dominio}
                     </Td>
                     <Td className="text-muted-foreground">{t.vehiculo ?? "—"}</Td>
-                    <Td className="text-muted-foreground">
-                      {t.gestores
-                        ? `${t.gestores.nombre}${t.gestores.alias ? ` (${t.gestores.alias})` : ""}`
-                        : "—"}
-                    </Td>
+                    {!modoGestor && (
+                      <Td className="text-muted-foreground">
+                        {t.gestores
+                          ? `${t.gestores.nombre}${t.gestores.alias ? ` (${t.gestores.alias})` : ""}`
+                          : "—"}
+                      </Td>
+                    )}
                     <Td><EstadoTramiteChip estado={t.estado} /></Td>
                     <Td className="text-right tabular-nums">{formatPriceARS(t.cobrado_cliente)}</Td>
                     <Td className="text-right tabular-nums">
@@ -295,9 +317,18 @@ export function TramitesTab() {
                         </>
                       ) : "—"}
                     </Td>
-                    <Td className="text-right"><GananciaCell value={t.ganancia_transferencia} /></Td>
-                    <Td className="text-right"><GananciaCell value={t.ganancia_deudas} /></Td>
-                    <Td className="text-right"><GananciaCell value={gTotal} /></Td>
+                    {modoGestor ? (
+                      <>
+                        <Td className="text-muted-foreground tabular-nums">{formatDateAR(t.fecha_inicio)}</Td>
+                        <Td className="text-muted-foreground tabular-nums">{formatDateAR(t.fecha_papeles)}</Td>
+                      </>
+                    ) : (
+                      <>
+                        <Td className="text-right"><GananciaCell value={t.ganancia_transferencia} /></Td>
+                        <Td className="text-right"><GananciaCell value={t.ganancia_deudas} /></Td>
+                        <Td className="text-right"><GananciaCell value={gTotal} /></Td>
+                      </>
+                    )}
                     {canDelete && (
                       <Td>
                         <button
@@ -356,6 +387,7 @@ export function TramitesTab() {
         tramite={selected}
         gestores={gestoresActivos}
         canEdit={canEdit}
+        modoGestor={modoGestor}
       />
 
       {/* Confirmación de eliminado (solo dirección) */}
