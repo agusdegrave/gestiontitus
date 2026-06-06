@@ -4,17 +4,20 @@ import type { Verificacion, Informe } from "@/types/consignacion"
 
 export const PAGE_SIZE = 30
 
-const VENTA_SELECT = `id, auto_id, auto_entrega_id, estado_operacion,
-   fecha_senia, senia, lugar_senia,
-   vendedor_id, procedencia, precio_venta,
+// Select MÍNIMO para la lista: sin auto_entrega ni textos de seguimiento.
+// Un error en cualquier embed tira la query entera, así que la lista
+// solo embebe lo imprescindible (auto y vendedor, con FK explícito).
+const VENTA_LIST_SELECT = `id, auto_id, auto_entrega_id, estado_operacion,
+   fecha_senia, senia, vendedor_id, precio_venta,
    paga_contado, paga_permuta, paga_financiado,
-   financiera, cantidad_cuotas, costo_prenda,
-   comprador_nombre, comprador_apellido, comprador_dni,
-   comprador_domicilio, comprador_telefono, creado_en,
-   fecha_tentativa_entrega, fecha_entrega, costo_transferencia,
-   promesas_alistaje, aclaraciones,
+   comprador_nombre, comprador_apellido, creado_en,
    entrega_planilla_ok, entrega_checklist_ok, entrega_08_ok,
    entrega_veri_ok, entrega_seguro_ok, entrega_control_ok, entrega_legajo_ok,
+   autos!ventas_auto_id_fkey(dominio, marca, modelo, anio),
+   vendedor:usuarios!ventas_vendedor_id_fkey(nombre, apellido)`
+
+// Select completo solo para la FICHA (detalle)
+const VENTA_DETAIL_SELECT = `*,
    autos!ventas_auto_id_fkey(dominio, marca, modelo, anio, estado),
    vendedor:usuarios!ventas_vendedor_id_fkey(nombre, apellido),
    auto_entrega:autos!ventas_auto_entrega_id_fkey(dominio, marca, modelo)`
@@ -24,7 +27,7 @@ export async function fetchVentas(filters: VentaFilters, page: number) {
 
   let query = supabase
     .from("ventas")
-    .select(VENTA_SELECT, { count: "exact" })
+    .select(VENTA_LIST_SELECT, { count: "exact" })
     .order("creado_en", { ascending: false })
     .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
 
@@ -58,7 +61,7 @@ export async function fetchVentaById(id: string) {
   const supabase = createClient()
   const { data, error } = await supabase
     .from("ventas")
-    .select(VENTA_SELECT)
+    .select(VENTA_DETAIL_SELECT)
     .eq("id", id)
     .single()
 

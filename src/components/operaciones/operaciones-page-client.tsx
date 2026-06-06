@@ -47,7 +47,15 @@ export function OperacionesPageClient() {
     const result = await fetchVentas(activeFilters, page)
     setLoading(false)
     if (result.error) {
-      setPageError(`No se pudieron cargar las operaciones: ${result.error.message}`)
+      const e = result.error as { code?: string; message?: string; details?: string; hint?: string }
+      console.error("Error al cargar ventas (Supabase):", e)
+      const partes = [
+        e.code ? `[${e.code}]` : null,
+        e.message ?? "error desconocido",
+        e.details ? `— ${typeof e.details === "string" ? e.details : JSON.stringify(e.details)}` : null,
+        e.hint ? `(hint: ${e.hint})` : null,
+      ].filter(Boolean)
+      setPageError(`No se pudieron cargar las operaciones: ${partes.join(" ")}`)
       return
     }
     const normalized = ((result.data as unknown[]) ?? []).map(normalizeVenta)
