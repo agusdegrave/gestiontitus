@@ -26,6 +26,24 @@ import type { Verificacion, Informe } from "@/types/consignacion"
 
 const ROLES_EDITAN = ["administracion", "direccion"]
 
+// Deudas a sumar: campo en ventas → etiqueta (vacío = sin deuda = null)
+const DEUDAS_VENDIDO = [
+  { field: "deuda_muni", label: "Municipal" },
+  { field: "deuda_rentas", label: "Rentas" },
+  { field: "deuda_multas", label: "Multas" },
+] as const
+
+const DEUDAS_PERMUTA = [
+  { field: "deuda_permuta_muni", label: "Municipal" },
+  { field: "deuda_permuta_rentas", label: "Rentas" },
+  { field: "deuda_permuta_multas", label: "Multas" },
+] as const
+
+type DeudaField =
+  | (typeof DEUDAS_VENDIDO)[number]["field"]
+  | (typeof DEUDAS_PERMUTA)[number]["field"]
+  | "gastos_consigna"
+
 interface SeguimientoForm {
   estado_operacion: EstadoOperacion
   fecha_tentativa_entrega: string
@@ -34,6 +52,7 @@ interface SeguimientoForm {
   promesas_alistaje: string
   aclaraciones: string
   checklist: Record<ChecklistField, boolean>
+  deudas: Record<DeudaField, string>
 }
 
 function buildForm(v: Venta): SeguimientoForm {
@@ -47,7 +66,21 @@ function buildForm(v: Venta): SeguimientoForm {
     checklist: Object.fromEntries(
       CHECKLIST_ENTREGA.map((c) => [c.field, v[c.field] === true])
     ) as Record<ChecklistField, boolean>,
+    deudas: {
+      deuda_muni: v.deuda_muni?.toString() ?? "",
+      deuda_rentas: v.deuda_rentas?.toString() ?? "",
+      deuda_multas: v.deuda_multas?.toString() ?? "",
+      gastos_consigna: v.gastos_consigna?.toString() ?? "",
+      deuda_permuta_muni: v.deuda_permuta_muni?.toString() ?? "",
+      deuda_permuta_rentas: v.deuda_permuta_rentas?.toString() ?? "",
+      deuda_permuta_multas: v.deuda_permuta_multas?.toString() ?? "",
+    },
   }
+}
+
+// Vacío o no parseable = 0 para el total en vivo
+function sumDeudas(values: string[]): number {
+  return values.reduce((acc, v) => acc + (v.trim() ? (parsePrice(v) ?? 0) : 0), 0)
 }
 
 function SectionCard({ title, children, footer }: { title: string; children: React.ReactNode; footer?: React.ReactNode }) {
@@ -58,6 +91,29 @@ function SectionCard({ title, children, footer }: { title: string; children: Rea
       </div>
       <div className="px-5 py-4 space-y-4">{children}</div>
       {footer && <div className="px-5 py-3 border-t border-border flex items-center justify-end gap-3 bg-stone-50">{footer}</div>}
+    </div>
+  )
+}
+
+function DeudaInput({ label, value, onChange, disabled }: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  disabled: boolean
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label>{label}</Label>
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        placeholder="$ 0"
+        className="rounded-[10px]"
+      />
+      {value.trim() && (
+        <p className="text-xs text-muted-foreground">{formatPriceARS(parsePrice(value))}</p>
+      )}
     </div>
   )
 }
@@ -136,6 +192,18 @@ export function OperacionDetailClient({ ventaId }: { ventaId: string }) {
   const checklistDone = CHECKLIST_ENTREGA.filter((c) => form.checklist[c.field]).length
   const checklistTotal = CHECKLIST_ENTREGA.length
 
+  // Deudas a sumar: subtotales y total en vivo (vacío = 0)
+  const esConsigna = auto?.tipo === "consigna"
+  const hayPermuta = !!venta.auto_entrega_id
+  const subtotalVendido = sumDeudas([
+    ...DEUDAS_VENDIDO.map((d) => form.deudas[d.field]),
+    ...(esConsigna ? [form.deudas.gastos_consigna] : []),
+  ])
+  const subtotalPermuta = hayPermuta
+    ? sumDeudas(DEUDAS_PERMUTA.map((d) => form.deudas[d.field]))
+    : 0
+  const totalDeudas = subtotalVendido + subtotalPermuta
+
   function setField<K extends keyof SeguimientoForm>(field: K, value: SeguimientoForm[K]) {
     setForm((p) => (p ? { ...p, [field]: value } : p))
   }
@@ -145,6 +213,10 @@ export function OperacionDetailClient({ ventaId }: { ventaId: string }) {
     setForm((p) =>
       p ? { ...p, checklist: { ...p.checklist, [field]: !p.checklist[field] } } : p
     )
+  }
+
+  function setDeuda(field: DeudaField, value: string) {
+    setForm((p) => (p ? { ...p, deudas: { ...p.deudas, [field]: value } } : p))
   }
 
   async function handleSave() {
@@ -161,6 +233,10 @@ export function OperacionDetailClient({ ventaId }: { ventaId: string }) {
       promesas_alistaje: form.promesas_alistaje.trim() || null,
       aclaraciones: form.aclaraciones.trim() || null,
       ...form.checklist,
+      // Deudas: vacío = sin deuda = null (nunca "" ni 0)
+      ...Object.fromEntries(
+        Object.entries(form.deudas).map(([k, v]) => [k, v.trim() ? parsePrice(v) : null])
+      ),
     })
     if (error) {
       setSaving(false)
@@ -348,6 +424,89 @@ export function OperacionDetailClient({ ventaId }: { ventaId: string }) {
             className="rounded-[10px] resize-none"
             rows={3}
           />
+        </div>
+      </SectionCard>
+
+      {/* ── Deudas a sumar (editable) ────────────────── */}
+      <SectionCard title="Deudas a sumar">
+        {/* Deudas del auto vendido */}
+        <div className="space-y-3">
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              Deudas del auto vendido
+            </p>
+            {auto && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                <span className="font-mono font-medium">{auto.dominio}</span> · {auto.marca} {auto.modelo}
+              </p>
+            )}
+          </div>
+          <div className={cn("grid grid-cols-1 gap-3", esConsigna ? "sm:grid-cols-4" : "sm:grid-cols-3")}>
+            {DEUDAS_VENDIDO.map((d) => (
+              <DeudaInput
+                key={d.field}
+                label={d.label}
+                value={form.deudas[d.field]}
+                onChange={(v) => setDeuda(d.field, v)}
+                disabled={!canEdit}
+              />
+            ))}
+            {esConsigna && (
+              <DeudaInput
+                label="Gastos de consigna"
+                value={form.deudas.gastos_consigna}
+                onChange={(v) => setDeuda("gastos_consigna", v)}
+                disabled={!canEdit}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Deudas del auto de permuta (solo si entró un usado) */}
+        {hayPermuta && (
+          <div className="space-y-3 pt-1">
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                Deudas del auto de permuta
+              </p>
+              {venta.auto_entrega && (
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  <span className="font-mono font-medium">{venta.auto_entrega.dominio}</span> · {venta.auto_entrega.marca} {venta.auto_entrega.modelo}
+                </p>
+              )}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {DEUDAS_PERMUTA.map((d) => (
+                <DeudaInput
+                  key={d.field}
+                  label={d.label}
+                  value={form.deudas[d.field]}
+                  onChange={(v) => setDeuda(d.field, v)}
+                  disabled={!canEdit}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Total en vivo */}
+        <div className="rounded-[10px] bg-stone-50 border border-border px-4 py-3 space-y-1">
+          {hayPermuta && (
+            <>
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Subtotal auto vendido</span>
+                <span className="tabular-nums">{formatPriceARS(subtotalVendido)}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Subtotal auto de permuta</span>
+                <span className="tabular-nums">{formatPriceARS(subtotalPermuta)}</span>
+              </div>
+            </>
+          )}
+          <div className="flex items-center justify-between text-sm font-semibold text-foreground">
+            <span>Total deudas a sumar</span>
+            <span className="tabular-nums">{formatPriceARS(totalDeudas)}</span>
+          </div>
         </div>
       </SectionCard>
 

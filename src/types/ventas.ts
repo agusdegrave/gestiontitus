@@ -51,6 +51,14 @@ export interface Venta {
   comprador_dni: string | null
   comprador_domicilio: string | null
   comprador_telefono: string | null
+  // Deudas a sumar (todas opcionales; null = sin deuda)
+  deuda_muni: number | null
+  deuda_rentas: number | null
+  deuda_multas: number | null
+  gastos_consigna: number | null
+  deuda_permuta_muni: number | null
+  deuda_permuta_rentas: number | null
+  deuda_permuta_multas: number | null
   // Seguimiento / entrega
   fecha_tentativa_entrega: string | null
   fecha_entrega: string | null
@@ -71,6 +79,7 @@ export interface Venta {
     modelo: string
     anio: number | null
     estado?: import("./stock").EstadoAuto
+    tipo?: import("./stock").TipoAuto
   } | null
   vendedor?: {
     nombre: string

@@ -18,7 +18,7 @@ const VENTA_LIST_SELECT = `id, auto_id, auto_entrega_id, estado_operacion,
 
 // Select completo solo para la FICHA (detalle)
 const VENTA_DETAIL_SELECT = `*,
-   autos!ventas_auto_id_fkey(dominio, marca, modelo, anio, estado),
+   autos!ventas_auto_id_fkey(dominio, marca, modelo, anio, estado, tipo),
    vendedor:usuarios!ventas_vendedor_id_fkey(nombre, apellido),
    auto_entrega:autos!ventas_auto_entrega_id_fkey(dominio, marca, modelo)`
 
