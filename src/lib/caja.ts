@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client"
-import type { CajaSaldo, CajaMovimiento, MovimientoFilters } from "@/types/caja"
+import type { CajaSaldo, CajaMovimiento, MovimientoFilters, UsuarioAutorizable } from "@/types/caja"
 
 export const MOVIMIENTOS_PAGE_SIZE = 30
 
@@ -127,6 +127,43 @@ export async function transferir(params: {
     p_fecha: params.fecha,
     p_concepto: params.concepto,
   })
+}
+
+// ── Autorizaciones por caja (caja_usuarios) ───────────
+// Solo dirección administra esto; la RLS limita la agencia (sin filtros a mano).
+
+export async function fetchUsuariosActivos() {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from("usuarios")
+    .select("id, nombre, apellido, rol, gestor_id")
+    .eq("activo", true)
+    .order("nombre")
+  return { data: (data as UsuarioAutorizable[] | null) ?? [], error }
+}
+
+export async function fetchAutorizaciones(cajaId: string) {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from("caja_usuarios")
+    .select("usuario_id")
+    .eq("caja_id", cajaId)
+  return { data: (data as { usuario_id: string }[] | null) ?? [], error }
+}
+
+// INSERT: SOLO caja_id y usuario_id; agencia_id y auditoría los completa el trigger
+export async function insertAutorizacion(cajaId: string, usuarioId: string) {
+  const supabase = createClient()
+  return supabase.from("caja_usuarios").insert({ caja_id: cajaId, usuario_id: usuarioId })
+}
+
+export async function deleteAutorizacion(cajaId: string, usuarioId: string) {
+  const supabase = createClient()
+  return supabase
+    .from("caja_usuarios")
+    .delete()
+    .eq("caja_id", cajaId)
+    .eq("usuario_id", usuarioId)
 }
 
 // Autos para asociar a un movimiento (lista liviana)

@@ -12,6 +12,7 @@ import {
   TrendingUp,
   TrendingDown,
   Wallet,
+  Users,
 } from "lucide-react"
 import {
   Dialog,
@@ -37,6 +38,7 @@ import { TIPOS_CAJA } from "@/types/caja"
 import { CajaForm } from "./caja-form"
 import { MovimientoForm } from "./movimiento-form"
 import { TransferirDialog } from "./transferir-dialog"
+import { AutorizarDialog } from "./autorizar-dialog"
 import { MovimientosSection } from "./movimientos-section"
 import type { CajaSaldo } from "@/types/caja"
 import type { Gestor } from "@/types/gestoria"
@@ -110,6 +112,7 @@ export function CajaPageClient() {
   const [editingCaja, setEditingCaja] = useState<CajaSaldo | null>(null)
   const [movFormOpen, setMovFormOpen] = useState(false)
   const [transferirDe, setTransferirDe] = useState<CajaSaldo | null>(null)
+  const [autorizarCaja, setAutorizarCaja] = useState<CajaSaldo | null>(null)
 
   const [deleting, setDeleting] = useState<CajaSaldo | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
@@ -118,6 +121,8 @@ export function CajaPageClient() {
   const canManage = usuario ? ROLES_GESTIONAN.includes(usuario.rol) : false
   const canMov = canManage || usuario?.rol === "alistaje"
   const canDelete = usuario?.rol === "direccion"
+  // Autorizar usuarios por caja: SOLO dirección
+  const canAutorizar = usuario?.rol === "direccion"
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     if (!opts?.silent) setLoading(true)
@@ -272,6 +277,16 @@ export function CajaPageClient() {
                       )}>
                         {c.moneda === "USD" ? formatPriceUSD(c.saldo) : formatPriceARS(c.saldo)}
                       </p>
+                      {canAutorizar && (
+                        <button
+                          type="button"
+                          onClick={() => setAutorizarCaja(c)}
+                          className="mt-1.5 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          <Users className="w-3 h-3" />
+                          Autorizar
+                        </button>
+                      )}
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger
@@ -355,6 +370,10 @@ export function CajaPageClient() {
         onSaved={refreshAll}
         origen={transferirDe}
         cajas={cajas}
+      />
+      <AutorizarDialog
+        caja={autorizarCaja}
+        onClose={() => setAutorizarCaja(null)}
       />
 
       {/* Confirmación de eliminado (solo dirección) */}

@@ -1,3 +1,5 @@
+import type { Rol } from "./index"
+
 export type TipoCaja = "efectivo" | "financiera" | "gestoria" | "alistaje" | "otras"
 export type MonedaCaja = "ARS" | "USD"
 export type TipoMovimiento = "ingreso" | "egreso"
@@ -53,6 +55,15 @@ export interface MovimientoFilters {
   tipo: string // "" = todos
   desde: string
   hasta: string
+}
+
+// Usuario listado en "Autorizar usuarios" (tabla usuarios, solo activos)
+export interface UsuarioAutorizable {
+  id: string
+  nombre: string
+  apellido: string
+  rol: Rol
+  gestor_id: string | null
 }
 
 export const CATEGORIAS_SUGERIDAS = [
