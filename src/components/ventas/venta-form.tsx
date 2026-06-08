@@ -53,6 +53,9 @@ interface FormState {
   vendedor_id: string
   procedencia: string
   precio_venta: string
+  comision_base: string
+  margen_disponible: string
+  margen_usado: string
   paga_contado: string
   paga_permuta: string
   paga_financiado: string
@@ -92,6 +95,9 @@ function makeEmptyForm(usuarioId: string): FormState {
     vendedor_id: usuarioId,
     procedencia: "",
     precio_venta: "",
+    comision_base: "200000",
+    margen_disponible: "300000",
+    margen_usado: "0",
     paga_contado: "",
     paga_permuta: "",
     paga_financiado: "",
@@ -180,6 +186,9 @@ export function VentaForm({ open, onClose, onSaved, auto, usuarios }: Props) {
       vendedor_id: form.vendedor_id,
       procedencia: form.procedencia.trim() || null,
       precio_venta: parsePrice(form.precio_venta),
+      comision_base: parsePrice(form.comision_base) ?? 0,
+      margen_disponible: parsePrice(form.margen_disponible) ?? 0,
+      margen_usado: parsePrice(form.margen_usado) ?? 0,
       paga_contado: parsePrice(form.paga_contado),
       paga_permuta: parsePrice(form.paga_permuta),
       paga_financiado: parsePrice(form.paga_financiado),
@@ -311,6 +320,41 @@ export function VentaForm({ open, onClose, onSaved, auto, usuarios }: Props) {
                   />
                 </Field>
               </div>
+            </Section>
+
+            <Separator />
+
+            {/* COMISIÓN */}
+            <Section title="Comisión del vendedor">
+              <div className="grid grid-cols-3 gap-3">
+                <Field label="Comisión base ($)">
+                  <Input
+                    value={form.comision_base}
+                    onChange={(e) => set("comision_base")(e.target.value)}
+                    placeholder="200000"
+                    className="h-10 rounded-[10px]"
+                  />
+                </Field>
+                <Field label="Margen disponible ($)">
+                  <Input
+                    value={form.margen_disponible}
+                    onChange={(e) => set("margen_disponible")(e.target.value)}
+                    placeholder="300000"
+                    className="h-10 rounded-[10px]"
+                  />
+                </Field>
+                <Field label="Margen usado ($)">
+                  <Input
+                    value={form.margen_usado}
+                    onChange={(e) => set("margen_usado")(e.target.value)}
+                    placeholder="0"
+                    className="h-10 rounded-[10px]"
+                  />
+                </Field>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                El extra por objetivo se calcula a fin de mes según autos vendidos.
+              </p>
             </Section>
 
             <Separator />

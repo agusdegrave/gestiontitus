@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useAuth } from "@/contexts/auth-context"
+import { GastosAutoSection } from "@/components/vehiculos/gastos-auto-section"
 import { fetchConsignacionById, updateAuto, updateConsignacionRecord, updateVerificacion, updateInforme } from "@/lib/consignacion"
 import { fetchUsuariosAgencia } from "@/lib/stock"
 import { formatPriceARS, parsePrice, capFirst } from "@/lib/utils"
@@ -757,6 +758,9 @@ export function ConsignacionDetailClient({ autoId }: { autoId: string }) {
           </div>
         </SectionCard>
       )}
+
+      {/* ── Sección: Gastos del vehículo ───────────────── */}
+      <GastosAutoSection autoId={data.id} />
     </div>
   )
 }

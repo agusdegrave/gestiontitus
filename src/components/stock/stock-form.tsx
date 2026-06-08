@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { Loader2, ChevronDown, ChevronUp } from "lucide-react"
+import { GastosAutoSection } from "@/components/vehiculos/gastos-auto-section"
 import { saveAuto } from "@/lib/stock"
 import { parsePrice, formatPriceARS, capFirst } from "@/lib/utils"
 import type { Auto, UsuarioSimple } from "@/types/stock"
@@ -476,6 +477,14 @@ export function StockForm({ open, onClose, onSaved, editingAuto, usuarios }: Pro
                   </Field>
                 </div>
               </div>
+            )}
+
+            {/* Gastos del vehículo (solo en edición: el alta todavía no tiene id) */}
+            {editingAuto && (
+              <>
+                <Separator />
+                <GastosAutoSection autoId={editingAuto.id} />
+              </>
             )}
 
             {error && (

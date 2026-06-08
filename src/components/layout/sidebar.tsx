@@ -32,7 +32,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Gestoría", href: "/gestoria", icon: ClipboardList, active: true },
   { label: "Caja", href: "/caja", icon: Wallet, active: true },
   { label: "Gestores", href: null, icon: Users, active: false },
-  { label: "Dirección", href: null, icon: BarChart3, active: false },
+  { label: "Dirección", href: "/direccion", icon: BarChart3, active: true },
 ]
 
 export function Sidebar() {
@@ -40,11 +40,14 @@ export function Sidebar() {
   const { usuario } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
 
-  // El rol gestor solo ve Gestoría (su vista restringida)
+  // El rol gestor solo ve Gestoría (su vista restringida).
+  // Dirección es privado: solo lo ve el rol direccion.
   const navItems =
     usuario?.rol === "gestor"
       ? NAV_ITEMS.filter((item) => item.label === "Gestoría")
-      : NAV_ITEMS
+      : NAV_ITEMS.filter(
+          (item) => item.label !== "Dirección" || usuario?.rol === "direccion"
+        )
 
   return (
     <aside

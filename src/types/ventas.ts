@@ -146,6 +146,10 @@ export interface Venta {
   financiera: string | null
   cantidad_cuotas: number | null
   costo_prenda: number | null
+  // Comisión del vendedor (el extra por objetivo se liquida a fin de mes)
+  comision_base: number | null
+  margen_disponible: number | null
+  margen_usado: number | null
   comprador_nombre: string
   comprador_apellido: string
   comprador_dni: string | null

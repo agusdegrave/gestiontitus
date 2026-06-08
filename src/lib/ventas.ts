@@ -178,6 +178,9 @@ interface VentaPayload {
   vendedor_id: string
   procedencia: string | null
   precio_venta: number | null
+  comision_base: number
+  margen_disponible: number
+  margen_usado: number
   paga_contado: number | null
   paga_permuta: number | null
   paga_financiado: number | null
