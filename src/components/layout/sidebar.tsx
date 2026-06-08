@@ -9,7 +9,6 @@ import {
   FileText,
   ClipboardList,
   Wallet,
-  Users,
   BarChart3,
   PanelLeftClose,
   PanelLeftOpen,
@@ -31,7 +30,6 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Operaciones", href: "/operaciones", icon: FileText, active: true },
   { label: "Gestoría", href: "/gestoria", icon: ClipboardList, active: true },
   { label: "Caja", href: "/caja", icon: Wallet, active: true },
-  { label: "Gestores", href: null, icon: Users, active: false },
   { label: "Dirección", href: "/direccion", icon: BarChart3, active: true },
 ]
 
