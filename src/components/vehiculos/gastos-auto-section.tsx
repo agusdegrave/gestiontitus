@@ -14,8 +14,10 @@ import {
 } from "@/components/ui/select"
 import { useAuth } from "@/contexts/auth-context"
 import { fetchGastosAuto, insertGastoAuto, updateGastoAuto, deleteGastoAuto } from "@/lib/gastos"
-import { formatPriceARS, formatPriceUSD, formatDateAR, parsePrice, capFirst } from "@/lib/utils"
+import { fetchCajasActivas } from "@/lib/caja"
+import { formatPriceARS, formatPriceUSD, formatDateAR, parsePrice, capFirst, formatSupabaseError } from "@/lib/utils"
 import { CATEGORIAS_GASTO, totalesGastos, type GastoAuto } from "@/types/gastos"
+import { TIPOS_CAJA, type Caja } from "@/types/caja"
 
 interface FormState {
   fecha: string
@@ -23,6 +25,7 @@ interface FormState {
   categoria: string
   monto: string
   moneda: string
+  caja_id: string
 }
 
 function emptyForm(): FormState {
@@ -32,7 +35,12 @@ function emptyForm(): FormState {
     categoria: "",
     monto: "",
     moneda: "ARS",
+    caja_id: "",
   }
+}
+
+function labelTipoCaja(tipo: Caja["tipo"]): string {
+  return TIPOS_CAJA.find((t) => t.tipo === tipo)?.label ?? tipo
 }
 
 // Sección "Gastos del vehículo": CRUD sobre gastos_auto.
@@ -40,6 +48,8 @@ function emptyForm(): FormState {
 export function GastosAutoSection({ autoId }: { autoId: string }) {
   const { usuario } = useAuth()
   const [gastos, setGastos] = useState<GastoAuto[]>([])
+  // Cajas activas que este usuario puede usar (la RLS limita visibilidad)
+  const [cajas, setCajas] = useState<Caja[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -71,8 +81,33 @@ export function GastosAutoSection({ autoId }: { autoId: string }) {
     load()
   }, [load])
 
+  useEffect(() => {
+    fetchCajasActivas().then(({ data, error: err }) => {
+      if (err) {
+        setError(`Error al cargar cajas: ${formatSupabaseError(err)}`)
+        return
+      }
+      setCajas(data)
+    })
+  }, [])
+
   const set = (field: keyof FormState) => (val: string | null) =>
     setForm((prev) => ({ ...prev, [field]: val ?? "" }))
+
+  // Al cambiar la moneda, la caja elegida deja de servir si es de otra moneda
+  function setMoneda(val: string | null) {
+    const moneda = val ?? "ARS"
+    setForm((prev) => {
+      const caja = cajas.find((c) => c.id === prev.caja_id)
+      return {
+        ...prev,
+        moneda,
+        caja_id: caja && caja.moneda !== moneda ? "" : prev.caja_id,
+      }
+    })
+  }
+
+  const cajasMoneda = cajas.filter((c) => c.moneda === form.moneda)
 
   function openNew() {
     setForm(emptyForm())
@@ -87,6 +122,8 @@ export function GastosAutoSection({ autoId }: { autoId: string }) {
       categoria: g.categoria ?? "",
       monto: g.monto.toString(),
       moneda: g.moneda,
+      // Gastos viejos sin caja: selector vacío (obligatorio recién al guardar)
+      caja_id: g.caja_id ?? "",
     })
     setEditing(g.id)
     setError(null)
@@ -98,6 +135,10 @@ export function GastosAutoSection({ autoId }: { autoId: string }) {
       setError("Concepto y monto son obligatorios.")
       return
     }
+    if (!form.caja_id) {
+      setError("Elegí la caja de donde sale la plata.")
+      return
+    }
     setSaving(true)
     setError(null)
 
@@ -107,6 +148,7 @@ export function GastosAutoSection({ autoId }: { autoId: string }) {
       categoria: form.categoria || null,
       monto,
       moneda: form.moneda,
+      caja_id: form.caja_id,
     }
 
     const { error: err } =
@@ -116,7 +158,8 @@ export function GastosAutoSection({ autoId }: { autoId: string }) {
     setSaving(false)
 
     if (err) {
-      setError(`Error al guardar: ${err.message}`)
+      // El trigger puede rechazar (permiso de caja / moneda distinta): mostrarlo completo
+      setError(`Error al guardar: ${formatSupabaseError(err)}`)
       return
     }
     setEditing(null)
@@ -283,7 +326,7 @@ export function GastosAutoSection({ autoId }: { autoId: string }) {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Moneda</Label>
-                <Select value={form.moneda} onValueChange={set("moneda")}>
+                <Select value={form.moneda} onValueChange={setMoneda}>
                   <SelectTrigger className="w-full h-10 rounded-[10px]">
                     <SelectValue />
                   </SelectTrigger>
@@ -293,6 +336,28 @@ export function GastosAutoSection({ autoId }: { autoId: string }) {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Caja (de dónde sale la plata) *
+              </Label>
+              <Select value={form.caja_id} onValueChange={set("caja_id")}>
+                <SelectTrigger className="w-full h-10 rounded-[10px]">
+                  <SelectValue placeholder="Seleccioná una caja..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {cajasMoneda.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.nombre} — {labelTipoCaja(c.tipo)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {cajasMoneda.length === 0 && (
+                <p className="text-xs text-amber-700 rounded-[8px] bg-amber-50 border border-amber-200 px-2.5 py-1.5">
+                  No tenés cajas autorizadas en {form.moneda}. Pedile a dirección que te autorice una.
+                </p>
+              )}
             </div>
             <div className="flex items-center justify-end gap-2 pt-1">
               <Button
@@ -309,7 +374,7 @@ export function GastosAutoSection({ autoId }: { autoId: string }) {
                 type="button"
                 size="sm"
                 onClick={handleSave}
-                disabled={saving}
+                disabled={saving || cajasMoneda.length === 0}
                 className="rounded-[10px] bg-brand-500 hover:bg-brand-600 text-white h-8"
               >
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Guardar gasto"}

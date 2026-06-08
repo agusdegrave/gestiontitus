@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/client"
 import type { GastoAuto } from "@/types/gastos"
 
-const GASTO_SELECT = "id, auto_id, fecha, concepto, categoria, monto, moneda, creado_en"
+const GASTO_SELECT = "id, auto_id, fecha, concepto, categoria, monto, moneda, caja_id, creado_en"
 
 export async function fetchGastosAuto(autoId: string): Promise<{
   data: GastoAuto[]

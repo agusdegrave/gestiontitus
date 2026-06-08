@@ -9,6 +9,9 @@ export interface GastoAuto {
   categoria: string | null
   monto: number
   moneda: Moneda
+  // Caja de donde sale la plata; el trigger genera el egreso de caja.
+  // null solo en gastos viejos (al editar se vuelve obligatorio).
+  caja_id: string | null
   creado_en: string | null
 }
 

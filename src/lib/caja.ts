@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client"
-import type { CajaSaldo, CajaMovimiento, MovimientoFilters, UsuarioAutorizable } from "@/types/caja"
+import type { Caja, CajaSaldo, CajaMovimiento, MovimientoFilters, UsuarioAutorizable } from "@/types/caja"
 
 export const MOVIMIENTOS_PAGE_SIZE = 30
 
@@ -127,6 +127,22 @@ export async function transferir(params: {
     p_fecha: params.fecha,
     p_concepto: params.concepto,
   })
+}
+
+// Cajas activas que el usuario logueado puede usar.
+// La RLS de cajas ya limita la visibilidad (dirección ve todas; el resto,
+// solo las autorizadas en caja_usuarios) — sin filtros de agencia a mano.
+export async function fetchCajasActivas(): Promise<{
+  data: Caja[]
+  error: { message: string } | null
+}> {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from("cajas")
+    .select("id, nombre, tipo, moneda, gestor_id")
+    .eq("activa", true)
+    .order("nombre")
+  return { data: (data as Caja[] | null) ?? [], error }
 }
 
 // ── Autorizaciones por caja (caja_usuarios) ───────────

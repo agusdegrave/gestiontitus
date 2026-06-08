@@ -40,3 +40,20 @@ export function parsePrice(raw: string): number | null {
   const n = parseFloat(cleaned)
   return isNaN(n) ? null : n
 }
+
+// Error de Supabase legible: "[code] message — details (hint)"
+export function formatSupabaseError(e: {
+  code?: string
+  message?: string
+  details?: unknown
+  hint?: string
+}): string {
+  return [
+    e.code ? `[${e.code}]` : null,
+    e.message ?? "error desconocido",
+    e.details ? `— ${typeof e.details === "string" ? e.details : JSON.stringify(e.details)}` : null,
+    e.hint ? `(hint: ${e.hint})` : null,
+  ]
+    .filter(Boolean)
+    .join(" ")
+}
